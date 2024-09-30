@@ -1,9 +1,9 @@
 # Project Overview
 
-## Work in Progress (WIP)
+## (WIP)
 - **`main.py`**: Implementing `EpsilonScheduler.update()` and importing the pretrained model.
 
-## To Be Announced (TBA)
+## (TBA)
 - **`env.py`**.
 
 ## Pretrained Model Source Code
