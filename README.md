@@ -1,6 +1,6 @@
 WIP:
 main.py
-  EpsilonScheduler.update()
+  EpsilonScheduler.update(), 
   import pretrained model
 
 TBA:
