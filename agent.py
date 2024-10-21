@@ -1,11 +1,11 @@
 import torch
-from env import Env
+from env import Env, State
 
 class DuelDDQNAgent():
     def __init__(self,
                  Q_model,
                  optimizer, 
-                 discount_factor=0.99,
+                 discount_factor:float=0.99,
                  ):
         # objects
         self.Q_main = Q_model
@@ -15,7 +15,7 @@ class DuelDDQNAgent():
         self.discount_factor = discount_factor
         # private
 
-    def choose_action(self, state, epsilon):
+    def choose_action(self, state: State, epsilon: float) ->int:
         if random.uniform(0, 1) < epsilon:
             return Env.random_action(state)
         else:

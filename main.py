@@ -4,33 +4,39 @@ import random
 import torch.optim as optim
 from agent import DuelDDQNAgent
 from model import Duel_DDNQ
-from env import Env
+from env import Env, State
+from typing import List
 
-
+# def create_b(self)-> B:
 class EpsilonScheduler():
-    def __init__(self, initial_val=1, min_val=0.01, decay_rate=0.995):
+    epsilon = None
+    min_val = None
+    decay_rate = None
+    def __init__(self, initial_val:float=1, min_val:float=0.01, decay_rate:float=0.995):
         self.epsilon = initial_val
         self.min_val = min_val
         self.decay_rate = decay_rate
 
-    def update(self, episode):
+    def update(self, episode:int):
         self.epsilon = max(self.min_val, self.epsilon * self.decay_rate)
         # tba
 
-
+class Experiance():
+    somethint: str# tba
 class ReplayMemory():
-    def __init__(self, max_size):
+    buffer:List[Experiance] = None
+    def __init__(self, max_size:int):
         self.buffer = collections.deque(maxlen=max_size)
 
-    def append(self, exp):
+    def append(self, exp:Experiance):
         self.buffer.append(exp)
 
-    def sample(self):
+    def sample(self)-> Experiance:
         experience = random.sample(self.buffer, 1)
         state, action, reward, next_state, terminated = experience
         return state, action, reward, next_state, terminated
 
-    def __len__(self):
+    def __len__(self)->int:
         return len(self.buffer)
 
 
