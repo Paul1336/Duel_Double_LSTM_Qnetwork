@@ -1,20 +1,21 @@
 import torch
 import torch.nn as nn
-from env import Env
+from env import Env, State
 
 class Duel_DDNQ(nn.Module):
     def __init__(self, pretrained_model, LSTM_output_dim = 38, head_hidden_dim = 128):
-        super(Duel_DQNQ, self).__init__()
+        super(Duel_DDNQ, self).__init__()
         self.lstm = pretrained_model
         
         self.adv_fc = nn.Linear(LSTM_output_dim, head_hidden_dim)
-        self.adv_out = nn.Linear(head_hidden_dim, Env.action_space)
+        self.adv_out = nn.Linear(head_hidden_dim, Env.n_actions)
         
         self.val_fc = nn.Linear(LSTM_output_dim, head_hidden_dim)
         self.val_out = nn.Linear(head_hidden_dim, 1)
 
 
-    def forward(self, x):
+    def forward(self, x:State) ->float:
+        #tba, process the state
         shared_out = self.lstm(x)
         
         adv = nn.ReLU(self.adv_fc(shared_out))
