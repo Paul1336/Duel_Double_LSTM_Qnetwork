@@ -1,14 +1,13 @@
 from dataclasses import dataclass
 import torch
 from typing import Tuple
+from dealer import Dealer, Deal
+from reward import RewardCalculator, ddResponse
 
 @dataclass
 class State:
     features: torch.tensor = None
     bidding_sequence: torch.tensor = None
-    #torch.cat, the last 3 is the previos tensor
-
-#action: int(ont hot encoding bidding)
 
 @dataclass
 class Experiance():
@@ -21,22 +20,26 @@ class Experiance():
 class Env():
     n_actions:int = 38
     current_state:State = None
-    imp_loss:ImpChart = None# tba
+    reward_calculater = None
     Qnetwork = None
     def __init__ (self, Qnetwork):
         self.Qnetwork = Qnetwork
         self.reset()
 
     @classmethod
-    def random_action(cls, state)->int:
-        return cls.action_space#tba, depends on state
+    def random_action(state)->int:
+        return Env.action_space 
+        # tba, depends on state
 
     def reset (self)-> State:
-        print("initialize")
-        #tba: deal, calc DDA and IMP
+        deal = Dealer.new_game()
+        current_state = deal.new_state
+        self.reward_calculater = (RewardCalculator(deal.vul, deal.pbn))
 
-    def step (self)-> Tuple[State, float, int]:#next_state, reward, terminate
-        print("initialize")#tba, predict next state w/ qnetwork
+    def step (self, action:int)-> Tuple[State, float, int]:# next_state, reward, terminate
+        print("initialize")
+        #tba, calc reward with reward.imploss() method and predict next state with qnetwork
+        #tba, judge terminated
 
     def update_networks(self, Qnetwork):
         self.Qnetwork = Qnetwork

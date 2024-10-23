@@ -7,8 +7,11 @@ class ddResponse(ctypes.Structure):
 
 
 dll_path = "./DoubleDummySolver.dll"
-deal = ctypes.c_char_p(b"N:A2.AKQJT98765..2 T987.3.AT987.876 KQJ.2.KQJ.AKQJT9 6543.4.65432.543")# NESW, SHDC
-vul = (ctypes.c_int * 2)(1, 0)
+my_str = "N:A2.AKQJT98765..2 T987.3.AT987.876 KQJ.2.KQJ.AKQJT9 6543.4.65432.543"
+my_str = "N:AKQJT98765432... .AKQJT98765432.. ..KQJT98765432.2 ..A.AKQJT9876543"
+my_list = [1, 0]
+deal = ctypes.c_char_p(my_str.encode('utf-8'))# NESW, SHDC
+vul = (ctypes.c_int * 2)(*my_list)
 dll = ctypes.CDLL(dll_path)
 dll.ddAnalize.restype = ddResponse
 result = dll.ddAnalize(deal, vul)

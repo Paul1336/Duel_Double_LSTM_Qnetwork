@@ -7,14 +7,12 @@ class DuelDDQNAgent():
     Q_target = None
     optimizer = None
     discount_factor = None
+
     def __init__(self, Q_model, optimizer, discount_factor:float=0.99):
-        # objects
         self.Q_main = Q_model
         self.Q_target = Q_model
         self.optimizer = optimizer
-        # hyperparameters
         self.discount_factor = discount_factor
-        # private
 
     def choose_action(self, state: State, epsilon: float) ->int:
         if np.random.uniform(0, 1) < epsilon:
@@ -36,8 +34,7 @@ class DuelDDQNAgent():
             return self.Q_main(state)
                 
     def train(self, exp:Experiance):
-        """Update the agent."""        
-        #state, action, reward, next_state, terminated
+        #Update the agent.
         with torch.no_grad():
             next_q_values_target= self.pred_model(exp.next_state, "target")
             next_q_values_main = self.pred_model(exp.next_state, "main")
