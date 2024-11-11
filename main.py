@@ -5,6 +5,7 @@ import torch.optim as optim
 import collections
 import random
 from typing import List, Optional
+import math
 # my customize lib
 from agent import DuelDDQNAgent
 from model import Duel_DDNQ
@@ -14,26 +15,30 @@ from env import Env, Experiance
 NUM_EPISODES = 500  # max ep
 LEARNING_RATE = 0.001
 DISCOUNT_FACTOR = 0.99
-MIN_EPSILON = 0.01
+EPS_START = 0.9
+EPS_END = 0.05
+EPS_DECAY = 1000
 TARGET_UPDATE = 10
 MEMORY_SIZE = 10000
 MIN_MEMORY_SIZE = 64
-DECAY_RATE = 0.995
+
 HEAD_HIDDEN_DIM = 128
-PRETRAINED_MODEL_PATH = 'pretrained_model.pth'# tba, save pretrained LSTM with pytorch method: torch.save
+PRETRAINED_MODEL_PATH = './pretrained_LSTM.pt'# tba, save pretrained LSTM with pytorch method: torch.save
 
 class EpsilonScheduler():
     epsilon:float = None
-    min_val:float = None
+    start:float = None
+    end:float = None
     decay_rate:float = None
 
-    def __init__(self, initial_val:float=1, min_val:float=0.01, decay_rate:float=0.995):
+    def __init__(self, initial_val:float=1, min_val:float=0.01, decay_rate:float=1000):
         self.epsilon = initial_val
-        self.min_val = min_val
+        self.start = initial_val
+        self.end = min_val
         self.decay_rate = decay_rate
 
     def update(self, episode:int):
-        self.epsilon = max(self.min_val, self.epsilon * self.decay_rate)
+        self.epsilon = self.end + (self.start - self.end) * math.exp(-1. * episode / self.decay_rate)
         # tba, decay algo base on episode or other factor
 
 
@@ -60,7 +65,7 @@ def train_agent():
     agent = DuelDDQNAgent(Q_model, optimizer, DISCOUNT_FACTOR)
     memory = ReplayMemory(MEMORY_SIZE)
     env = Env(agent.get_network())
-    epsilon_scheduler = EpsilonScheduler(initial_val=1.0, min_val=MIN_EPSILON, decay_rate=DECAY_RATE)
+    epsilon_scheduler = EpsilonScheduler(initial_val=EPS_START, min_val=EPS_END, decay_rate=EPS_DECAY)
     
     while len(memory) < MIN_MEMORY_SIZE:
         state = env.reset()
