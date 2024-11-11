@@ -3,7 +3,7 @@
 ## (WIP)
 
 - **`main.py`**:
-  - `EpsilonScheduler.update()` decay algo base on episode or other factor
+  - `EpsilonScheduler.update()` decay algo base on episode or other factor V
   - `parameters` save pretrained LSTM with pytorch method: torch.save
 
 - **`model.py`**:
