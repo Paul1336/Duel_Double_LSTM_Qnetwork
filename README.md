@@ -38,6 +38,7 @@ You can find the pretrained model source code at the following link:
 - **`State`**:
   - `features[4]` model input hand feature field for 4 player
   - `bidding_sequence` a list, the large index implied the later bidding, convertion is neede for being model input bidding sequence feature field
+  - `dealer` int
 
 - **`State`**: int, 0 < x < 37 , denote p, d, r, 1c...7s, 7n
 
