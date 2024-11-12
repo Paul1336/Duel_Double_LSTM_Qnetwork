@@ -85,7 +85,7 @@ class Dealer():
                 _vulnerable[3][2] = 1
         if USE_CARD_DETAIL is True:
             _features = [torch.cat((cards, features)) for cards, features in zip(_cards, _extract_features)]
-        _features = [torch.cat((cards, vulnerable)) for cards, vulnerable in zip(_features, _vulnerable)]
+        _features = [torch.cat((feature, vulnerable)) for features, vulnerable in zip(_features, _vulnerable)]
         _state.features = _features
         _deal.new_state = _state
         return _deal
