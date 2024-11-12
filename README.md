@@ -4,7 +4,7 @@
 
 - **`main.py`**:
   - `EpsilonScheduler.update()` decay algo base on episode or other factor V
-  - `parameters` save pretrained LSTM with pytorch method: torch.save
+  - `parameters` save pretrained LSTM with pytorch method: torch.save, try full data set w/ cards info
 
 - **`model.py`**:
   - `__init__()` adjustment for the model's heads
