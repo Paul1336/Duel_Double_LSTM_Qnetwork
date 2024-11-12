@@ -33,7 +33,7 @@ class Env():
 
     def reset (self)-> State:
         deal = Dealer.new_game()
-        current_state = deal.new_state
+        self.current_state = deal.new_state
         self.reward_calculater = (RewardCalculator(deal.vul, deal.pbn))
 
     def step (self, action:int)-> Tuple[State, float, int]:# next_state, reward, terminate

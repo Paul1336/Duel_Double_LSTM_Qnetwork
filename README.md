@@ -26,7 +26,7 @@
   - `imp_diff()` record dealer of suit and return loss
 
 - **`dealer.py`**:
-  - `new_game()`
+  - `new_game()` V
 
 ## Pretrained Model Source Code
 
@@ -36,7 +36,7 @@ You can find the pretrained model source code at the following link:
 ## Data Structure and Encoding
 
 - **`State`**:
-  - `features` model input hand feature field
+  - `features[4]` model input hand feature field for 4 player
   - `bidding_sequence` a list, the large index implied the later bidding, convertion is neede for being model input bidding sequence feature field
 
 - **`State`**: int, 0 < x < 37 , denote p, d, r, 1c...7s, 7n
@@ -49,3 +49,5 @@ You can find the pretrained model source code at the following link:
 - **`Dealer`**: N-0, E-1, S-2, W-3
 
 - **`Suit`**: C-0, D-1, H-2, S-3, NT-4
+
+- **`USE_CARD_DETAIL`**: if feature fields have cards info()
