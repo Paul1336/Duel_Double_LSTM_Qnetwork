@@ -8,6 +8,7 @@ from reward import RewardCalculator, ddResponse
 class State:
     features: torch.tensor = None
     bidding_sequence: torch.tensor = None
+    dealer: int
 
 @dataclass
 class Experiance():

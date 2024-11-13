@@ -8,6 +8,7 @@ USE_CARD_DETAIL = True
 class State:
     features: torch.tensor = None
     bidding_sequence: torch.tensor = None
+    dealer: int
 
 @dataclass
 class Deal:
@@ -16,7 +17,7 @@ class Deal:
     pbn: str = None
 
 def shuffle(deck:list):
-    #Implementation Fisher-Yates shuffle
+    #Implementation of Fisher-Yates shuffle
     for i in range(len(deck) - 1, 0, -1):
         j = random.randint(0, i)
         deck[i], deck[j] = deck[j], deck[i]
@@ -85,8 +86,8 @@ class Dealer():
                 _vulnerable[3][2] = 1
         if USE_CARD_DETAIL is True:
             _features = [torch.cat((cards, features)) for cards, features in zip(_cards, _extract_features)]
-        _features = [torch.cat((feature, vulnerable)) for features, vulnerable in zip(_features, _vulnerable)]
+        _features = [torch.cat((features, vulnerable)) for features, vulnerable in zip(_features, _vulnerable)]
         _state.features = _features
+        _state.dealer = random.randint(0, 3)
         _deal.new_state = _state
         return _deal
-        #tba
