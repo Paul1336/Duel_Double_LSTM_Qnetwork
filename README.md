@@ -1,3 +1,10 @@
+# The research record and pretrained LSTM source code
+
+You can find the pretrained model source code at the following link:[(https://github.com/Paul1336/Contract_Bridge_LSTM)](https://github.com/Paul1336/Contract_Bridge_LSTM)
+
+The dataset and Experiment Log:
+[https://drive.google.com/drive/folders/1o8Xu1InRWeP3vMJ3RrRQa7mrjhiGmpHE?usp=drive_link](https://drive.google.com/drive/folders/1o8Xu1InRWeP3vMJ3RrRQa7mrjhiGmpHE?usp=drive_link)
+
 # Project Overview
 
 ## (WIP)
@@ -27,11 +34,6 @@
 
 - **`dealer.py`**:
   - `new_game()` V
-
-## Pretrained Model Source Code
-
-You can find the pretrained model source code at the following link:  
-[Pretrained Model Source Code](https://github.com/Paul1336/Contract_Bridge_LSTM)
 
 ## Data Structure and Encoding
 
