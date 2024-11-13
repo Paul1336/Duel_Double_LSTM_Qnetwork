@@ -8,6 +8,9 @@ USE_CARD_DETAIL = True
 class State:
     features: torch.tensor = None
     bidding_sequence: torch.tensor = None
+    last_doubled: int
+    last_bid: int
+    last_pass: int
     dealer: int
 
 @dataclass
@@ -89,5 +92,8 @@ class Dealer():
         _features = [torch.cat((features, vulnerable)) for features, vulnerable in zip(_features, _vulnerable)]
         _state.features = _features
         _state.dealer = random.randint(0, 3)
+        _state.last_bid = 0
+        _state.last_doubled = 0
+        _state.last_pass = 0
         _deal.new_state = _state
         return _deal

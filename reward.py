@@ -25,6 +25,6 @@ class RewardCalculator:
             print("err")
             
 
-    def imp_diff (self, dealer, bid) -> float:
-        return 0.5 
+    def imp_diff (self, doubled, player, bid, level) -> float:
+        return self.imp_chart[doubled][player][bid][level]
         # tba, record dealer of suit and return loss
