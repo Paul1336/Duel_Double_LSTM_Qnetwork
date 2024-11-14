@@ -6,25 +6,27 @@ DLL_PATH = "./DoubleDummySolver.dll"
 
 @dataclass
 class ddResponse(ctypes.Structure):
-    _fields_ = [("imp_loss", ctypes.c_int * 7 * 5 * 4 * 3),
-                ("error_type", ctypes.c_int * 2),]
+    _fields_ = [("imp_loss", ctypes.c_int),
+                ("error_type", ctypes.c_int),]
     # levels: [vul][suit][player]
 
 class RewardCalculator:
-    dealer: List[List[int]] # NS/EW, suit
-    imp_chart: ddResponse
+    pbn_str: str
+    vul: list[int]
+    dll: ctypes.CDLL = None
 
-    def __init__ (self, deal: str, vul:list[int]): #tba deal type
-        self.dealer = [[2 for j in range(2)] for i in range(5)]
+    def __init__ (self, _deal: str, _vul:list[int]): #tba deal type
+        self.pbn_str = _deal
+        self.vul = _vul
         #deal = ctypes.c_char_p(b"N:A2.AKQJT98765..2 T987.3.AT987.876 KQJ.2.KQJ.AKQJT9 6543.4.65432.543")# NESW, SHDC, from deal
         #vul = (ctypes.c_int * 2)(1, 0)# from deal
-        dll = ctypes.CDLL(DLL_PATH)
-        dll.ddAnalize.restype = ddResponse
-        self.imp_chart = dll.ddAnalize(ctypes.c_char_p(deal.encode('utf-8')), (ctypes.c_int * 2)(*vul))
-        if self.imp_chart.error_type[0] != 0 or self.imp_chart.error_type[1] != 0:
-            print("err")
-            
+        self.dll = ctypes.CDLL(DLL_PATH)
+        self.dll.ddAnalize.restype = ddResponse
 
-    def imp_diff (self, doubled, player, bid, level) -> float:
-        return self.imp_chart[doubled][player][bid][level]
+    def imp_diff (self, state) -> float:
+        res = self.dll.ddAnalize(ctypes.c_char_p(self.pbn_str.encode('utf-8')), (ctypes.c_int * 2)(*self.vul), ctypes.c_int("action"), ctypes.c_int("doubled"), ctypes.c_int("dealer"))
+        if res.error_type[0] != 0 or self.imp_chart.error_type[1] != 0:
+            print("err")
+            return 0
+        return res.imp_loss
         # tba, record dealer of suit and return loss
