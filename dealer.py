@@ -37,8 +37,8 @@ class Dealer():
         _deal.vul[0] = random.randint(0, 1)
         _deal.vul[1] = random.randint(0, 1)
         _deal.pbn = "N:"
-        _extract_features = [torch.zeros(10, dtype=torch.int) for _ in range(4)]
-        _cards = [torch.zeros(52, dtype=torch.int) for _ in range(4)]
+        _extract_features = [torch.zeros(10, dtype=torch.float32) for _ in range(4)]
+        _cards = [torch.zeros(52, dtype=torch.float32) for _ in range(4)]
         for i in range(0, 4):
             hand = deck[13*i:13*(i+1)].sort
             suit = 0
@@ -64,7 +64,7 @@ class Dealer():
                 _extract_features[i][4] += _extract_features[i][j]
         _state = State()
         _state.bidding_sequence = torch.tensor([])
-        _vulnerable = [torch.zeros(4, dtype=torch.int) for _ in range(4)]
+        _vulnerable = [torch.zeros(4, dtype=torch.float32) for _ in range(4)]
         if(_deal.vul[0] == 1):
             if(_deal.vul[1] == 1):
                 _vulnerable[0][1] = 1

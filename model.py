@@ -14,13 +14,25 @@ class Duel_DDNQ(nn.Module):
 
 
     def forward(self, x:State) ->float:
-        #tba, convert input from state type to tensor
-        shared_out = self.lstm(x)
-        
+        player = (x.dealer+len(x.bidding_sequence))%4
+        cnt = player
+        single_bid = torch.zeros(183, dtype=torch.float32)
+        single_bid[:66] = x.features[player]
+        tensor_list  = []
+        while cnt-x.dealer <= len(x.bidding_sequence):
+            _row = single_bid.clone
+            for i in range(3, 0, -1):
+                if cnt - i < 0:
+                    _row[66+(3-i)*39] = 1
+                else:
+                    _row[67+(3-i)*39+x.bidding_sequence[cnt-i]] = 1
+            cnt+=4
+            tensor_list.append(_row)
+        shared_out = self.lstm(tensor_list.cuda())
         adv = nn.ReLU(self.adv_fc(shared_out))
         adv = self.adv_out(adv)
         val = nn.ReLU(self.val_fc(shared_out))
         val = self.val_out(val)
         q_values = val + adv - adv.mean(dim=1, keepdim=True)
         #tba, adjustment for Q-value calc
-        return q_values
+        return q_values.cpu()
