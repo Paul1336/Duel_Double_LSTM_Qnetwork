@@ -35,16 +35,16 @@ const int IMP_CHART[401] = {0, 0, 1, 1, 1, 2, 2, 2, 2, 3, 3, 3, 3, 4, 4, 4, 4, 5
 
 struct ddResponse
 {
-    int imp_loss[3][4][5][7]; // double(0, 1=d, 2=r), dealer, suit, level
-    int error_type[2];        // calc, par
+    int imp_loss;   //
+    int error_type; // calc*1000 + par
 };
 
-extern "C" __attribute__((dllexport)) ddResponse ddAnalize(char *deal, int vul[2])
+extern "C" __attribute__((dllexport)) ddResponse ddAnalize(char *deal, int vul[2], int suit, int level, int doubled, int dealer)
 {
     SetMaxThreads(0);
     SetResources(0, 0);
     ddResponse res;
-
+    res.error_type = 0;
     ddTableDealPBN _deal;
 
     strcpy(_deal.cards, deal);
@@ -52,13 +52,9 @@ extern "C" __attribute__((dllexport)) ddResponse ddAnalize(char *deal, int vul[2
     int error_type = CalcDDtablePBN(_deal, &_result);
     if (error_type != 1)
     {
-        res.error_type[0] = error_type;
-        res.error_type[1] = -1;
+        res.error_type = error_type * 1000;
         return res;
     }
-
-    else
-        res.error_type[0] = 0;
 
     parResults _presp;
     int encoded_vul;
@@ -87,14 +83,12 @@ extern "C" __attribute__((dllexport)) ddResponse ddAnalize(char *deal, int vul[2
     error_type = Par(&_result, &_presp, encoded_vul);
     if (error_type != 1)
     {
-        res.error_type[1] = error_type;
+        res.error_type = error_type;
         return res;
     }
-    else
-        res.error_type[1] = 0;
     /*printf("NS : %s\n", _presp.parContractsString[0]);
     printf("EW : %s\n", _presp.parContractsString[1]);*/
-    int best_score[2];
+    int best_score;
     int sign = 1;
     int number = 0;
     int found_number = 0;
@@ -117,8 +111,12 @@ extern "C" __attribute__((dllexport)) ddResponse ddAnalize(char *deal, int vul[2
         }
         ptr++;
     }
-    best_score[0] = number * sign;
-    best_score[1] = -best_score[0];
+    best_score = number * sign;
+    if (dealer % 2 == 1)
+    {
+        best_score *= -1
+    }
+
     // printf("best_score[0]: %d, best_score[1]: %d\n", best_score[0], best_score[1]);
     /*for (int i = 0; i < 4; i++)
     {
@@ -127,48 +125,41 @@ extern "C" __attribute__((dllexport)) ddResponse ddAnalize(char *deal, int vul[2
             printf("dealer: %d, suit: %d, trick: %d\n", i, j, _result.resTable[j][i]);
         }
     }*/
-    int test[3][4][5][7];
-    for (int doubled = 0; doubled < 3; doubled++)
+    int score;
+    int my_encoding = 4;
+    if (suit == -1)
     {
-        for (int dealer = 0; dealer < 4; dealer++)
+        score = 0
+    }
+    else
+    {
+        if (suit < 4)
         {
-            for (int suit = 0; suit < 5; suit++)
-            {
-                int my_encoding = 4;
-                if (suit < 4)
-                {
-                    my_encoding = 3 - suit;
-                }
-                for (int level = 0; level < 7; level++)
-                {
-
-                    int score;
-                    if (level + 7 <= _result.resTable[suit][dealer])
-                    {
-                        int over_trick = _result.resTable[suit][dealer] - (level + 7);
-                        score = CONTRACT_VAL[doubled][vul[dealer % 2]][my_encoding][level] + OVERTRICK_VAL[doubled][vul[dealer % 2]][my_encoding] * over_trick;
-                    }
-                    else
-                    {
-                        int down = (level + 7) - _result.resTable[suit][dealer] - 1;
-                        score = -UNDER_TRICKS_CHART[doubled][vul[dealer % 2]][down];
-                        // test[doubled][dealer][suit][level] = down;
-                    }
-                    // test[doubled][dealer][my_encoding][level] = score;
-                    int diff = (score - best_score[dealer % 2]) / 10;
-                    int sign = 1;
-                    if (diff < 0)
-                    {
-                        sign = -1;
-                        diff = -diff;
-                    }
-                    if (diff > 400)
-                        diff = 400;
-                    res.imp_loss[doubled][dealer][my_encoding][level] = sign * IMP_CHART[diff];
-                }
-            }
+            my_encoding = 3 - suit;
+        }
+        if (level + 7 <= _result.resTable[suit][dealer])
+        {
+            int over_trick = _result.resTable[suit][dealer] - (level + 7);
+            score = CONTRACT_VAL[doubled][vul[dealer % 2]][my_encoding][level] + OVERTRICK_VAL[doubled][vul[dealer % 2]][my_encoding] * over_trick;
+        }
+        else
+        {
+            int down = (level + 7) - _result.resTable[suit][dealer] - 1;
+            score = -UNDER_TRICKS_CHART[doubled][vul[dealer % 2]][down];
+            // test[doubled][dealer][suit][level] = down;
         }
     }
+    // test[doubled][dealer][my_encoding][level] = score;
+    int diff = (score - best_score) / 10;
+    int sign = 1;
+    if (diff < 0)
+    {
+        sign = -1;
+        diff = -diff;
+    }
+    if (diff > 400)
+        diff = 400;
+    res.imp_loss = sign * IMP_CHART[diff];
 
     /*for (int dealer = 0; dealer < 4; dealer++)
     {
