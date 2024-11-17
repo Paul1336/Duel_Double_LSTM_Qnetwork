@@ -7,11 +7,12 @@ USE_CARD_DETAIL = True
 @dataclass
 class State:
     features: torch.tensor = None
-    bidding_sequence: torch.tensor = None
+    bidding_sequence: list[int] = None
     last_doubled: int
     last_bid: int
     last_pass: int
     dealer: int
+    agent_team: int
 
 @dataclass
 class Deal:
@@ -63,8 +64,10 @@ class Dealer():
             for j in range(0, 4):
                 _extract_features[i][4] += _extract_features[i][j]
         _state = State()
+
         _state.bidding_sequence = torch.tensor([])
         _vulnerable = [torch.zeros(4, dtype=torch.float32) for _ in range(4)]
+
         if(_deal.vul[0] == 1):
             if(_deal.vul[1] == 1):
                 _vulnerable[0][1] = 1
@@ -92,6 +95,7 @@ class Dealer():
         _features = [torch.cat((features, vulnerable)) for features, vulnerable in zip(_features, _vulnerable)]
         _state.features = _features
         _state.dealer = random.randint(0, 3)
+        _state.agent_team = random.randint(0, 1)
         _state.last_bid = 0
         _state.last_doubled = 0
         _state.last_pass = 0

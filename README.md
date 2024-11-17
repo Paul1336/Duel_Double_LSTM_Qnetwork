@@ -29,12 +29,16 @@ The dataset and Experiment Log:
 - **`env.py`**:
 
   - `random_action()` random return an action(int) depends on current state V
-  - `step()` calc reward and predict next state with qnetwork
-  - `step()` judge terminated
+  - `step()` calc reward and predict next state with qnetwork V
+  - `step()` judge terminated V
 
 - **`reward.py`**:
 
-  - `imp_diff()` record dealer of suit and return loss V
+  - `imp_diff()` the new version need to convert state to contract info
+
+- **`DDS.cpp`**:
+
+  - `ddAnalize()` the new version only return imp diff
 
 - **`dealer.py`**:
   - `new_game()` V
