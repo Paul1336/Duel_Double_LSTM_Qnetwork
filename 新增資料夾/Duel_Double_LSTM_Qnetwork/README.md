@@ -1,13 +1,6 @@
-# The research record and pretrained LSTM source code
-
-You can find the pretrained model source code at the following link:[https://github.com/Paul1336/Contract_Bridge_LSTM](https://github.com/Paul1336/Contract_Bridge_LSTM)
-
-The dataset and Experiment Log:
-[https://drive.google.com/drive/folders/1o8Xu1InRWeP3vMJ3RrRQa7mrjhiGmpHE?usp=drive_link](https://drive.google.com/drive/folders/1o8Xu1InRWeP3vMJ3RrRQa7mrjhiGmpHE?usp=drive_link)
-
 # Project Overview
 
-## (To be tuning)
+## (WIP)
 
 - **`main.py`**:
 
@@ -16,18 +9,33 @@ The dataset and Experiment Log:
 
 - **`model.py`**:
   - `__init__()` adjustment for the model's heads
+  - `forward()` convert input from state type to tensor
   - `forward()` adjustment for Q-value calc
 
-## (To do list)
+## (TBA)
 
 - **`main.py`**:
 
   - `main()` loggin and saving model
   - `main()` contral during process
 
-- **`model.py`**:
-  - testing for sequence input and pretrained model
-  - training LSTM
+- **`env.py`**:
+
+  - `random_action()` random return an action(int) depends on current state
+  - `step()` calc reward and predict next state with qnetwork
+  - `step()` judge terminated
+
+- **`reward.py`**:
+
+  - `imp_diff()` record dealer of suit and return loss
+
+- **`dealer.py`**:
+  - `new_game()` V
+
+## Pretrained Model Source Code
+
+You can find the pretrained model source code at the following link:  
+[Pretrained Model Source Code](https://github.com/Paul1336/Contract_Bridge_LSTM)
 
 ## Data Structure and Encoding
 
@@ -35,11 +43,9 @@ The dataset and Experiment Log:
 
   - `features[4]` model input hand feature field for 4 player
   - `bidding_sequence` a list, the large index implied the later bidding, convertion is neede for being model input bidding sequence feature field
-  - `last_doubled` int, 0 denote no doubled before, -ith to be the last double/redouble otherwise
-  - `last_bid` int, 0 denote no bid before, -ith to be the last bid otherwise
-  - `last_pass` int, 0 denote no pass before, -ith to be the last pass otherwise
   - `dealer` int
-  - `agent_team` int, 0: N/S, 1:E/W
+
+- **`State`**: int, 0 < x < 37 , denote p, d, r, 1c...7s, 7n
 
 - **`Deal`**
 
@@ -50,7 +56,5 @@ The dataset and Experiment Log:
 - **`Dealer`**: N-0, E-1, S-2, W-3
 
 - **`Suit`**: C-0, D-1, H-2, S-3, NT-4
-
-- **`action/bid`** int, 0 = p, 1 = d, 2 = r, 3 = 1c...37 = 7N
 
 - **`USE_CARD_DETAIL`**: if feature fields have cards info()

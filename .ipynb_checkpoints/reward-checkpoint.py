@@ -1,5 +1,4 @@
 import ctypes
-import os
 from dataclasses import dataclass
 from state import State
 
@@ -10,14 +9,13 @@ SO_PATH = "./linux_dds.so"
 @dataclass
 class ddResponse(ctypes.Structure):
     _fields_ = [("imp_loss", ctypes.c_int),
-                ("error_type_calc", ctypes.c_int),
-                ("error_type_par", ctypes.c_int),]
+                ("error_type", ctypes.c_int),]
     # levels: [vul][suit][player]
 
 class RewardCalculator:
     pbn_str: str
     vul: list[int]
-    dll: ctypes.CDLL
+    dll: ctypes.CDLL = None
 
     def __init__ (self, _deal: str, _vul:list[int]): #tba deal type
         self.pbn_str = _deal
@@ -34,24 +32,31 @@ class RewardCalculator:
         dealer = -1
         if len(state.bidding_sequence) > 4:
             suit = (state.bidding_sequence[state.last_bid]-3)%5
-            level = (state.bidding_sequence[state.last_bid]-3)//5
+            level = (state.bidding_sequence[state.last_bid]-3)/5
             if(state.last_bid > state.last_doubled):
                 doubled = state.bidding_sequence[state.last_doubled]
             for index, value in enumerate(state.bidding_sequence):
                 if index%2 == len(state.bidding_sequence)%2:
                     if (value-3)%5 == suit:
                         dealer = index%4
-        print("*self.vul", *self.vul)
-        print("suit", suit)
-        print("level", level)
-        print("doubled", doubled)
-        print("dealer", dealer)
-        print("pbn_str", self.pbn_str)
-        res = self.dll.ddAnalize(ctypes.c_char_p(self.pbn_str.encode('utf-8')), (ctypes.c_int * 2)(*self.vul), ctypes.c_int(3), ctypes.c_int(4), ctypes.c_int(0), ctypes.c_int(dealer))
-        #res = self.dll.ddAnalize(ctypes.c_char_p(self.pbn_str.encode('utf-8')), (ctypes.c_int * 2)(*self.vul), ctypes.c_int(suit), ctypes.c_int(level), ctypes.c_int(doubled), ctypes.c_int(dealer))
-        if res.error_type != 0:
-            print(res.error_type)
+        res = self.dll.ddAnalize(ctypes.c_char_p(self.pbn_str.encode('utf-8')), (ctypes.c_int * 2)(*self.vul), ctypes.c_int(suit), ctypes.c_int(level), ctypes.c_int(doubled), ctypes.c_int(dealer))
+        if res.error_type[0] != 0 or self.imp_chart.error_type[1] != 0:
             print("err")
             return 0
         return res.imp_loss
         # tba, record dealer of suit and return loss
+
+
+from dealer import Dealer
+def _test():
+    deal = Dealer.new_game()
+    calculator = RewardCalculator(deal.pbn, deal.vul)
+    deal.new_state.bidding_sequence = [0, 0, 6, 1, 8, 0, 9, 0, 21]
+    deal.new_state.print_state
+    print(calculator.imp_diff(deal.new_state))
+    deal.new_state.bidding_sequence = [0, 0, 6, 1, 8, 0, 9, 0, 21, 0, 0, 0]
+    deal.new_state.print_state
+    print(calculator.imp_diff(deal.new_state))
+
+if __name__ == "__main__":
+    _test()

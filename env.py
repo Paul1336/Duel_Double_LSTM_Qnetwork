@@ -1,19 +1,11 @@
 from dataclasses import dataclass
 import torch
 from typing import Tuple
-from dealer import Dealer, Deal
+from dealer import Dealer
+from state import State
 from reward import RewardCalculator, ddResponse
 import random
 
-@dataclass
-class State:
-    features: torch.tensor = None
-    bidding_sequence: list[int] = None
-    last_doubled: int
-    last_bid: int
-    last_pass: int
-    dealer: int
-    agent_team: int
 
 @dataclass
 class Experiance():
