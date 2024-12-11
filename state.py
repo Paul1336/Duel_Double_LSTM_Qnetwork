@@ -14,7 +14,6 @@ class State:
     agent_team: int = 0
 
     def log(self, f):
-        print("aaa")
         position = ["North", "East", "South", "West"]
         for i in range(0, 4):
             f.write(f"{position[i]}: \n")
@@ -31,4 +30,4 @@ class State:
         f.write(f"last bid: {self.last_bid}\n")
         f.write(f"last pass: {self.last_pass}\n")
         f.write(f"dealer: {self.dealer}\n")
-        f.write(f"agent team: {self.bidding_sequence}\n")
+        f.write(f"agent team: {self.agent_team}\n")

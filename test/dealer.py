@@ -2,8 +2,8 @@ from dealer import *
     
 def _test():
     deal = Dealer.new_game()
-    print(deal)
-    State.print_state(deal.new_state)
+    with open("./test.log", 'a') as f:
+        deal.new_state.log(f)
     print("vul:", deal.vul)
     print("pbn:", deal.pbn)
 

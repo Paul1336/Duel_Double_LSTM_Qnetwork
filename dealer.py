@@ -3,7 +3,6 @@ from state import State
 import torch
 import random
 
-
 USE_CARD_DETAIL = True
 
 @dataclass
@@ -13,7 +12,7 @@ class Deal:
     pbn: str = None
 
 def shuffle(deck:list):
-    #Implementation of Fisher-Yates shuffle
+    #Fisher-Yates shuffle
     for i in range(len(deck) - 1, 0, -1):
         j = random.randint(0, i)
         deck[i], deck[j] = deck[j], deck[i]
