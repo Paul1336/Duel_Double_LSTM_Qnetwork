@@ -1,5 +1,6 @@
 from dataclasses import dataclass, field
 import torch
+import logger
 
 
 @dataclass
@@ -12,22 +13,22 @@ class State:
     dealer: int = 0
     agent_team: int = 0
 
-    def print_state(self):
-        print("features len:", len(self.features[0]))
+    def log(self, f):
+        print("aaa")
         position = ["North", "East", "South", "West"]
         for i in range(0, 4):
-            print(position[i], ":")
-            print("S  :", self.features[i][:13])
-            print("H  :", self.features[i][13:26])
-            print("D  :", self.features[i][26:39])
-            print("C  :", self.features[i][39:52])
-            print("HCP:", self.features[i][52:57])
-            print("len:", self.features[i][57:61])
-            print("bal:", self.features[i][61])
-            print("vul:", self.features[i][62:66])
-        print("features sequence:", self.bidding_sequence)
-        print("last doubled:", self.last_doubled)
-        print("last bid:", self.last_bid)
-        print("last pass:", self.last_pass)
-        print("dealer:", self.dealer)
-        print("agent team:", self.agent_team)
+            f.write(f"{position[i]}: \n")
+            f.write(f"S  :{self.features[i][:13]}\n")
+            f.write(f"H  :{self.features[i][13:26]}\n")
+            f.write(f"D  :{self.features[i][26:39]}\n")
+            f.write(f"C  :{self.features[i][39:52]}\n")
+            f.write(f"HCP:{self.features[i][52:57]}\n")
+            f.write(f"len:{self.features[i][57:61]}\n")
+            f.write(f"bal:{self.features[i][61]}\n")
+            f.write(f"vul:{self.features[i][62:66]}\n")
+        f.write(f"features sequence: {self.bidding_sequence}\n")
+        f.write(f"last doubled: {self.last_doubled}\n")
+        f.write(f"last bid: {self.last_bid}\n")
+        f.write(f"last pass: {self.last_pass}\n")
+        f.write(f"dealer: {self.dealer}\n")
+        f.write(f"agent team: {self.bidding_sequence}\n")
