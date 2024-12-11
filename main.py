@@ -9,7 +9,7 @@ import math
 import logger
 import signal
 import os
-import time
+import datetime
 # my customize lib
 from agent import DuelDDQNAgent
 from model import Duel_DDNQ
@@ -25,7 +25,8 @@ TARGET_UPDATE = 10
 MEMORY_SIZE = 10000
 MIN_MEMORY_SIZE = 64
 
-PRETRAINED_MODEL_PATH = './pretrained_LSTM.pt'# tba, save pretrained LSTM with pytorch method: torch.save
+PRETRAINED_MODEL_PATH = './pretrained_LSTM.pt'
+# TBA, save pretrained LSTM(full feature) with pytorch method: torch.save
 
 class EpsilonScheduler():
     epsilon:float = None
@@ -40,31 +41,61 @@ class EpsilonScheduler():
         self.decay_rate = decay_rate
 
     def update(self, episode:int):
-        self.epsilon = self.end + (self.start - self.end) * math.exp(-1. * episode / self.decay_rate)
+        try:
+            self.epsilon = self.end + (self.start - self.end) * math.exp(-1. * episode / self.decay_rate)
+        except:
+            raise RuntimeError(f"EpsilonScheduler.update() occur an error: {e}") from e
 
+    def log(self, file_name):
+        with open(file_name, 'w') as f:
+            f.write(f"Epsilon Scheduler State:\n")
+            f.write(f"Current Epsilon: {self.epsilon}\n")
+            f.write(f"Start Value: {self.start}\n")
+            f.write(f"End Value: {self.end}\n")
+            f.write(f"Decay Rate: {self.decay_rate}\n")
 
 class ReplayMemory():
-    buffer:Optional[Experiance] = None
+    buffer: collections.deque[Experiance]
+    max_size = None
     def __init__(self, max_size:int):
         self.buffer = collections.deque(maxlen=max_size)
+        self.max_size = max_size
 
     def append(self, exp:Experiance):
-        self.buffer.append(exp) # discard the earliest obj and free memory
+        try:
+            self.buffer.append(exp)
+        except:
+            raise RuntimeError(f"ReplayMemory.append() occur an error: {e}") from e
 
     def sample(self)-> Experiance:
-        experience = random.sample(self.buffer, 1)
+        try:
+            experience = random.sample(self.buffer, 1)
+        except:
+            raise RuntimeError(f"ReplayMemory.sample() occur an error: {e}") from e
         return experience
 
     def __len__(self)->int:
         return len(self.buffer)
+    
+    def log(self, file_name):
+        with open(file_name, 'w') as f:
+            if not self.buffer:
+                f.write("No experiences to log.\n")
+            else:
+                f.write(f"Replay Memory State:\n")
+                f.write(f"Current Buffer Size: {len(self.buffer)}\n")
+                f.write(f"Max Buffer Size: {self.max_size}\n")
+                f.write("All Experiences:\n")
+                for i, exp in enumerate(self.buffer, 1):
+                    f.write(f"--- Experience {i} ---\n")
+                    exp.log(f)
 
 
-def train_agent():
+def train_agent(episode):
     epsilon_scheduler.update(episode)
     state = env.reset()
     terminated = False
     total_reward = 0
-
     while not terminated:
         action = agent.choose_action(state, EpsilonScheduler.epsilon)
         next_state, reward, terminated = env.step(action)
@@ -75,19 +106,40 @@ def train_agent():
         if len(memory) >= MIN_MEMORY_SIZE:
             exp = memory.sample()
             agent.train(exp)
-    episode += 1
-    if episode % TARGET_UPDATE == 0:
+    if (episode+1) % TARGET_UPDATE == 0:
         agent.synchronous_networks()
     env.update_networks(agent.get_network())
-    log.info(f"Episode: {episode}, Total Reward: {total_reward}")
+    log.info(f"Episode: {episode+1}, Total Reward: {total_reward}")
+    
+
+def build_memory(max_size, min_size):
+    memory = ReplayMemory(max_size)
+    while len(memory) < min_size:
+        state = env.reset()
+        terminated = False
+        while not terminated:
+            action = agent.choose_action(state, EpsilonScheduler.epsilon)
+            next_state, reward, terminated = env.step(action)
+            memory.append(Experiance(state, action, reward, next_state, terminated))
+            state = next_state
+    return memory
 
 def log_process_state():
-    pass
-    #tba
-
-def save_model():
-    pass
-    #tba
+    timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+    log_dir = os.path.join('./log', timestamp)
+    os.makedirs(log_dir, exist_ok=True)
+    agent_log_file = os.path.join(log_dir, 'agent.log')
+    env_log_file = os.path.join(log_dir, 'env.log')
+    epsilon_log_file = os.path.join(log_dir, 'epsilon.log')
+    memory_log_file = os.path.join(log_dir, 'memory.log')
+    log.info(f"Logging agent state to: {agent_log_file}")
+    log.info(f"Logging environment state to: {env_log_file}")
+    log.info(f"Logging epsilon scheduler state to: {epsilon_log_file}")
+    log.info(f"Logging replay memory state to: {memory_log_file}")
+    agent.log(agent_log_file)
+    env.log(env_log_file)
+    epsilon_scheduler.log(epsilon_log_file)
+    memory.log(memory_log_file)
 
 def option_handler(signum, frame):
     global running
@@ -101,33 +153,26 @@ if __name__ == "__main__":
     log.info("starting process")
     pid = os.getpid()
     log.info(f"running on process ID = {pid}")
-    log.info(f"use command: \"kill -SIGUSR1 {pid}\" to select option")
-    log.info("initialize...")
+    print(f"use command: \"kill -SIGUSR1 {pid}\" to go to the menu")
+    print("initialize...")
     pretrained_model = torch.load(PRETRAINED_MODEL_PATH)
+    #TBA
     log.info(f"load pretrained model: {PRETRAINED_MODEL_PATH}")
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    log.info(f"Using device = {device}")
     Q_model = Duel_DDNQ(pretrained_model).to(device)
-    log.info(f"initialize q network, Using device: {device}")
+    log.info(f"initialize q network")
     optimizer = optim.Adam(Q_model.parameters(), lr=LEARNING_RATE)
-    log.info(f"initialize optimizer adam with learning rate = {LEARNING_RATE}")
+    log.info(f"initialize adam optimizer, learning rate = {LEARNING_RATE}")
     agent = DuelDDQNAgent(Q_model, optimizer, DISCOUNT_FACTOR)
-    log.info(f"build agent, discount factor = {DISCOUNT_FACTOR}")
-    memory = ReplayMemory(MEMORY_SIZE)
-    log.info(f"initialize empty replay memory, size = {MEMORY_SIZE}")
+    log.info(f"build agent, discount factor = {DISCOUNT_FACTOR}, target q update per {TARGET_UPDATE} epochs")
     env = Env(agent.get_network())
     log.info(f"build enviroment")
     epsilon_scheduler = EpsilonScheduler(initial_val=EPS_START, min_val=EPS_END, decay_rate=EPS_DECAY)
     log.info(f"build scheduler, initial value = {EPS_START}, minimun value = {EPS_END}, decay rate = {EPS_DECAY}")
-    log.info(f"building replay memory with size = {MIN_MEMORY_SIZE}")
-    while len(memory) < MIN_MEMORY_SIZE:
-        state = env.reset()
-        terminated = False
-        while not terminated:
-            action = agent.choose_action(state, EpsilonScheduler.epsilon)
-            next_state, reward, terminated = env.step(action)
-            memory.append(Experiance(state, action, reward, next_state, terminated))
-            state = next_state
-    log.info(f"project initialized, start training agent...")
+    memory = build_memory(MEMORY_SIZE, MIN_MEMORY_SIZE)
+    log.info(f"build replay memory including experience {MIN_MEMORY_SIZE}, max size {MEMORY_SIZE}")
+    print(f"project initialized, start training agent...")
     running = True
     run_forever = True
     steps_to_run = 0
@@ -135,15 +180,22 @@ if __name__ == "__main__":
     while True:
         if running:
             # training loop
-            if run_forever:
-                train_agent()
-            else:
-                if steps_to_run > 0:
-                    train_agent()
-                    steps_to_run -= 1
+            try:
+                if run_forever:
+                    train_agent(episode)
+                    episode+=1
                 else:
-                    running = False
-                    log.info("specified training loop finished")
+                    if steps_to_run > 0:
+                        train_agent(episode)
+                        episode+=1
+                        steps_to_run -= 1
+                    else:
+                        running = False
+                        log.info("specified training loop finished")
+            except Exception as e:
+                log.error(e)
+                running = False
+                
         else:
             cmd = input("process paused, option: (r=resume, rN=resume N times, l=log current states, s=save model, q=quit): ").strip()
             if cmd == 'r':
@@ -160,7 +212,7 @@ if __name__ == "__main__":
             elif cmd == 'l':
                 log_process_state()                
             elif cmd == 's':
-                save_model()  
+                agent.save_model()  
                 break
             elif cmd == 'q':
                 log.info("process terminated")
