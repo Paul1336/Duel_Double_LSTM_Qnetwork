@@ -2,6 +2,7 @@ from dataclasses import dataclass, field
 from state import State
 import torch
 import random
+import logger
 
 USE_CARD_DETAIL = True
 
@@ -23,6 +24,7 @@ CARD_HCP = [4, 3, 2, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0]
 class Dealer():
     @classmethod
     def new_game(cls)->Deal:
+        log = logger.get_logger(__name__)
         deck = [i for i in range (0, 52)] #spade AKQJ...
         deck = shuffle(deck)
         _deal = Deal()
@@ -94,4 +96,8 @@ class Dealer():
         _state.last_doubled = 0
         _state.last_pass = 0
         _deal.new_state = _state
+        log.debug("Creacted a deal:")
+        _deal.new_state.log()
+        log.debug(f"vul: {_deal.vul}")
+        log.debug(f"pbn: {_deal.pbn}")
         return _deal
