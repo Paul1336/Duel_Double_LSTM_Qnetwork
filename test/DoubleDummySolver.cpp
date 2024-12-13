@@ -67,9 +67,115 @@ ddResponse test(char *deal, int vul[2], int suit, int level, int doubled, int de
         std::cout << "Strain " << strain << ": ";
         for (int hand = 0; hand < DDS_HANDS; ++hand)
         {
-            std::cout << std::setw(3) << table.resTable[strain][hand] << " ";
+            std::cout << _result.resTable[strain][hand] << " ";
         }
         std::cout << std::endl;
+    }
+    parResults _presp;
+    int decoded_vul;
+    if (vul[0] == 0)
+    {
+        if (vul[1] == 0)
+        {
+            decoded_vul = 0;
+        }
+        else
+        {
+            decoded_vul = 3;
+        }
+    }
+    else
+    {
+        if (vul[1] == 0)
+        {
+            decoded_vul = 2;
+        }
+        else
+        {
+            decoded_vul = 1;
+        }
+    }
+    res.error_type_par = Par(&_result, &_presp, decoded_vul);
+    if (!res.error_type_par)
+    {
+        return res;
+    }
+    int best_score_NS;
+    int sign = 1;
+    int number = 0;
+    int found_number = 0;
+    char *ptr = _presp.parScore[0];
+    while (*ptr)
+    {
+        if (*ptr == '-')
+        {
+            sign = -1;
+        }
+        else if (isdigit(*ptr))
+        {
+            found_number = 1;
+            number = number * 10 + (*ptr - '0');
+        }
+        else if (found_number)
+        {
+            break;
+        }
+        ptr++;
+    }
+    best_score_NS = number * sign;
+    printf("best_score_NS: %d\n", best_score_NS);
+    printf("NS : %s\n", _presp.parContractsString[0]);
+    int cur_score = 0;
+    if (suit == -1 && level == -1 && doubled == -1 && dealer == -1)
+    {
+        cur_score = 0;
+    }
+    else
+    {
+        if (suit == -1 || level == -1 || doubled == -1 || dealer == -1)
+        {
+            res.error_type_par = 0;
+            return res;
+        }
+        else
+        {
+            int decoded_suit = 4;
+            if (suit < 4)
+            {
+                decoded_suit = 3 - suit;
+            }
+            if (level + 7 <= _result.resTable[decoded_suit][dealer])
+            {
+                int over_trick = _result.resTable[decoded_suit][dealer] - (level + 7);
+                cur_score = CONTRACT_VAL[doubled][vul[dealer % 2]][suit][level] + OVERTRICK_VAL[doubled][vul[dealer % 2]][suit] * over_trick;
+            }
+            else
+            {
+                int down = (level + 7) - _result.resTable[decoded_suit][dealer];
+                cur_score = -UNDER_TRICKS_CHART[doubled][vul[dealer % 2]][down - 1];
+            }
+        }
+    }
+    int cur_score_NS = cur_score;
+    if (dealer % 2 == 1)
+    {
+        cur_score_NS *= -1;
+    }
+    int diff = (cur_score_NS - best_score_NS) / 10;
+    if (diff < 0)
+    {
+        sign = -1;
+        diff = -diff;
+    }
+    if (diff > 400)
+        diff = 400;
+    if (view % 2 == 0)
+    {
+        res.imp_loss = sign * IMP_CHART[diff];
+    }
+    else
+    {
+        res.imp_loss = sign * IMP_CHART[diff] * -1;
     }
     return res;
 }

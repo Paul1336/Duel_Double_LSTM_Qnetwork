@@ -73,7 +73,7 @@ class ReplayMemory():
 
     def __len__(self)->int:
         return len(self.buffer)
-    
+
     def log(self):
         if not self.buffer:
             log.debug("No experiences to log.")
@@ -106,7 +106,7 @@ def train_agent(episode):
         agent.synchronous_networks()
     env.update_networks(agent.get_network())
     log.info(f"Episode: {episode+1}, Total Reward: {total_reward}")
-    
+
 
 def build_memory(max_size, min_size):
     memory = ReplayMemory(max_size)
@@ -181,7 +181,7 @@ if __name__ == "__main__":
             except Exception as e:
                 log.error(e)
                 running = False
-                
+
         else:
             cmd = input("process paused, option: (r=resume, rN=resume N times, l=log current states, s=save model, q=quit): ").strip()
             if cmd == 'r':
@@ -204,4 +204,3 @@ if __name__ == "__main__":
                 log.info("process terminated")
                 break
             else:
-                print("invalid command.")

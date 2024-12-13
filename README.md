@@ -54,7 +54,6 @@ The dataset and Experiment Log:
 - **`action/bid`** int, 0 = p, 1 = d, 2 = r, 3 = 1c...37 = 7N
 
 - **`level`**: actual level -1
-
 - **`USE_CARD_DETAIL`**: if feature fields have cards info()
 
 # Note
