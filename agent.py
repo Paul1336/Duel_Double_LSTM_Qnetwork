@@ -48,3 +48,9 @@ class DuelDDQNAgent():
         self.optimizer.zero_grad()
         loss.backward()
         self.optimizer.step()
+
+    def log(self):
+        pass
+
+    def save_model(self):
+        pass

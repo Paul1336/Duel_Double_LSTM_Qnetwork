@@ -42,25 +42,27 @@ const int IMP_CHART[401] = {0, 0, 1, 1, 1, 2, 2, 2, 2, 3, 3, 3, 3, 4, 4, 4, 4, 5
 struct ddResponse
 {
     int imp_loss;
-    int error_type; // calc*1000 + par
+    int error_type_calc;
+    int error_type_par;
 };
 
-extern "C" __attribute__((visibility("default"))) ddResponse ddAnalize(char *deal, int vul[2], int suit, int level, int doubled, int dealer)
+extern "C" __attribute__((visibility("default"))) ddResponse ddAnalize(char *deal, int vul[2], int suit, int level, int doubled, int dealer, int view)
 {
     SetMaxThreads(0);
     SetResources(0, 0);
     ddResponse res;
-    res.error_type = 0;
     ddTableDealPBN _deal;
     strcpy(_deal.cards, deal);
     printf("_deal : %s\n", _deal.cards);
     ddTableResults _result;
-    int error_type = CalcDDtablePBN(_deal, &_result);
-    if (error_type != 1)
+    int error_type_calc = CalcDDtablePBN(_deal, &_result);
+    if (error_type_calc != 1)
     {
-        res.error_type = error_type * 1000;
         return res;
     }
+
+    return res;
+
     int encoded_vul;
     if (vul[0] == 0)
     {

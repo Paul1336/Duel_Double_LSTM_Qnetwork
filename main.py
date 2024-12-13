@@ -4,12 +4,10 @@ import torch.optim as optim
 # util lib
 import collections
 import random
-from typing import Optional
 import math
 import logger
 import signal
 import os
-import datetime
 # my customize lib
 from agent import DuelDDQNAgent
 from model import Duel_DDNQ
@@ -46,13 +44,12 @@ class EpsilonScheduler():
         except:
             raise RuntimeError(f"EpsilonScheduler.update() occur an error: {e}") from e
 
-    def log(self, file_name):
-        with open(file_name, 'w') as f:
-            f.write(f"Epsilon Scheduler State:\n")
-            f.write(f"Current Epsilon: {self.epsilon}\n")
-            f.write(f"Start Value: {self.start}\n")
-            f.write(f"End Value: {self.end}\n")
-            f.write(f"Decay Rate: {self.decay_rate}\n")
+    def log(self):
+        log.debug(f"Epsilon Scheduler State:")
+        log.debug(f"Current Epsilon: {self.epsilon}")
+        log.debug(f"Start Value: {self.start}")
+        log.debug(f"End Value: {self.end}")
+        log.debug(f"Decay Rate: {self.decay_rate}")
 
 class ReplayMemory():
     buffer: collections.deque[Experiance]
@@ -77,18 +74,17 @@ class ReplayMemory():
     def __len__(self)->int:
         return len(self.buffer)
     
-    def log(self, file_name):
-        with open(file_name, 'w') as f:
-            if not self.buffer:
-                f.write("No experiences to log.\n")
-            else:
-                f.write(f"Replay Memory State:\n")
-                f.write(f"Current Buffer Size: {len(self.buffer)}\n")
-                f.write(f"Max Buffer Size: {self.max_size}\n")
-                f.write("All Experiences:\n")
-                for i, exp in enumerate(self.buffer, 1):
-                    f.write(f"--- Experience {i} ---\n")
-                    exp.log(f)
+    def log(self):
+        if not self.buffer:
+            log.debug("No experiences to log.")
+        else:
+            log.debug(f"Replay Memory State:")
+            log.debug(f"Current Buffer Size: {len(self.buffer)}")
+            log.debug(f"Max Buffer Size: {self.max_size}")
+            log.debug("All Experiences:")
+            for i, exp in enumerate(self.buffer, 1):
+                log.debug(f"--- Experience {i} ---")
+                exp.log()
 
 
 def train_agent(episode):
@@ -125,21 +121,11 @@ def build_memory(max_size, min_size):
     return memory
 
 def log_process_state():
-    timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
-    log_dir = os.path.join('./log', timestamp)
-    os.makedirs(log_dir, exist_ok=True)
-    agent_log_file = os.path.join(log_dir, 'agent.log')
-    env_log_file = os.path.join(log_dir, 'env.log')
-    epsilon_log_file = os.path.join(log_dir, 'epsilon.log')
-    memory_log_file = os.path.join(log_dir, 'memory.log')
-    log.info(f"Logging agent state to: {agent_log_file}")
-    log.info(f"Logging environment state to: {env_log_file}")
-    log.info(f"Logging epsilon scheduler state to: {epsilon_log_file}")
-    log.info(f"Logging replay memory state to: {memory_log_file}")
-    agent.log(agent_log_file)
-    env.log(env_log_file)
-    epsilon_scheduler.log(epsilon_log_file)
-    memory.log(memory_log_file)
+    log.info(f"log process states: ")
+    agent.log()
+    env.log()
+    epsilon_scheduler.log()
+    memory.log()
 
 def option_handler(signum, frame):
     global running

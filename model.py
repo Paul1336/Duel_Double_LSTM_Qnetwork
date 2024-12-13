@@ -1,40 +1,103 @@
-import torch
-import torch.nn as nn
-from env import Env
+from dataclasses import dataclass, field
 from state import State
+import torch
+import random
+import logger
 
-class Duel_DDNQ(nn.Module):
-    def __init__(self, pretrained_model, LSTM_output_dim = 38, head_hidden_dim = 128):
-        super(Duel_DDNQ, self).__init__()
-        self.lstm = pretrained_model.cuda()
-        #tba, adjustment for the model's heads
-        self.adv_fc = nn.Linear(LSTM_output_dim, head_hidden_dim).cuda()
-        self.adv_out = nn.Linear(head_hidden_dim, Env.n_actions).cuda()
-        self.val_fc = nn.Linear(LSTM_output_dim, head_hidden_dim).cuda()
-        self.val_out = nn.Linear(head_hidden_dim, 1).cuda()
+USE_CARD_DETAIL = True
 
+@dataclass
+class Deal:
+    new_state: State = None
+    vul: list[int] = field(default_factory=lambda: [0, 0])
+    pbn: str = None
 
-    def forward(self, x:State) ->float:
-        player = (x.dealer+len(x.bidding_sequence))%4
-        cnt = (player-x.dealer+4)%4
-        single_bid = torch.zeros(183, dtype=torch.float32)
-        single_bid[:66] = x.features[player]
-        tensor_list  = []
-        while cnt <= len(x.bidding_sequence):
-            _row = single_bid.clone()
-            for i in range(3, 0, -1):
-                if cnt - i < 0:
-                    _row[66+(3-i)*39] = 1
-                else:
-                    _row[67+(3-i)*39+x.bidding_sequence[cnt-i]] = 1
-            cnt+=4
-            tensor_list.append(_row)
-        tensor_list = torch.stack(tensor_list).unsqueeze(0).cuda()
-        shared_out = self.lstm(tensor_list.cuda())
-        adv = nn.ReLU()(self.adv_fc(shared_out))
-        adv = self.adv_out(adv)
-        val = nn.ReLU()(self.val_fc(shared_out))
-        val = self.val_out(val)
-        q_values = val + adv - adv.mean(dim=1, keepdim=True)
-        #tba, adjustment for Q-value calc
-        return q_values.flatten()
+def shuffle(deck:list):
+    #Fisher-Yates shuffle
+    for i in range(len(deck) - 1, 0, -1):
+        j = random.randint(0, i)
+        deck[i], deck[j] = deck[j], deck[i]
+    return deck
+
+CARD_NAMES = "AKQJT98765432"
+CARD_HCP = [4, 3, 2, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+class Dealer():
+    @classmethod
+    def new_game(cls)->Deal:
+        log = logger.get_logger(__name__)
+        deck = [i for i in range (0, 52)] #spade AKQJ...
+        deck = shuffle(deck)
+        _deal = Deal()
+        _deal.vul[0] = random.randint(0, 1)
+        _deal.vul[1] = random.randint(0, 1)
+        _deal.pbn = "N:"
+        _extract_features = [torch.zeros(10, dtype=torch.float32) for _ in range(4)]
+        _cards = [torch.zeros(52, dtype=torch.float32) for _ in range(4)]
+        for i in range(0, 4):
+            hand = sorted(deck[13*i:13*(i+1)])
+            suit = 0
+            suit_len = 0
+            bal = True
+            for card in hand:
+                _cards[i][card] = 1
+                while(card//13 > suit):
+                    _deal.pbn += "."
+                    _extract_features[i][5+suit] = suit_len
+                    suit += 1
+                    if(suit_len < 2):
+                        bal = False
+                    suit_len = 0
+                _deal.pbn += CARD_NAMES[card%13]
+                _extract_features[i][suit] += CARD_HCP[card%13]
+                suit_len += 1
+            _extract_features[i][5+suit] = suit_len
+            if(suit_len < 2):
+                bal = False
+            if bal is True:
+                _extract_features[i][9] = 1
+            for j in range(0, 4):
+                _extract_features[i][4] += _extract_features[i][j]
+            if i<3:
+                _deal.pbn+=" "
+        _state = State()
+
+        _state.bidding_sequence = torch.tensor([])
+        _vulnerable = [torch.zeros(4, dtype=torch.float32) for _ in range(4)]
+
+        if(_deal.vul[0] == 1):
+            if(_deal.vul[1] == 1):
+                _vulnerable[0][1] = 1
+                _vulnerable[1][1] = 1
+                _vulnerable[2][1] = 1
+                _vulnerable[3][1] = 1
+            else:
+                _vulnerable[0][0] = 1
+                _vulnerable[1][3] = 1
+                _vulnerable[2][0] = 1
+                _vulnerable[3][3] = 1
+        else:
+            if(_deal.vul[1] == 1):
+                _vulnerable[0][3] = 1
+                _vulnerable[1][0] = 1
+                _vulnerable[2][3] = 1
+                _vulnerable[3][0] = 1
+            else:
+                _vulnerable[0][2] = 1
+                _vulnerable[1][2] = 1
+                _vulnerable[2][2] = 1
+                _vulnerable[3][2] = 1
+        if USE_CARD_DETAIL is True:
+            _features = [torch.cat((cards, features)) for cards, features in zip(_cards, _extract_features)]
+        _features = [torch.cat((features, vulnerable)) for features, vulnerable in zip(_features, _vulnerable)]
+        _state.features = _features
+        _state.dealer = random.randint(0, 3)
+        _state.agent_team = random.randint(0, 1)
+        _state.last_bid = 0
+        _state.last_doubled = 0
+        _state.last_pass = 0
+        _deal.new_state = _state
+        log.debug("Creacted a deal:")
+        _deal.new_state.log()
+        log.debug(f"vul: {_deal.vul}")
+        log.debug(f"pbn: {_deal.pbn}")
+        return _deal

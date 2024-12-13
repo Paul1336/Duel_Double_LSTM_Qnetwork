@@ -13,21 +13,22 @@ class State:
     dealer: int = 0
     agent_team: int = 0
 
-    def log(self, f):
+    def log(self):
+        log = logger.get_logger(__name__)
         position = ["North", "East", "South", "West"]
         for i in range(0, 4):
-            f.write(f"{position[i]}: \n")
-            f.write(f"S  :{self.features[i][:13]}\n")
-            f.write(f"H  :{self.features[i][13:26]}\n")
-            f.write(f"D  :{self.features[i][26:39]}\n")
-            f.write(f"C  :{self.features[i][39:52]}\n")
-            f.write(f"HCP:{self.features[i][52:57]}\n")
-            f.write(f"len:{self.features[i][57:61]}\n")
-            f.write(f"bal:{self.features[i][61]}\n")
-            f.write(f"vul:{self.features[i][62:66]}\n")
-        f.write(f"features sequence: {self.bidding_sequence}\n")
-        f.write(f"last doubled: {self.last_doubled}\n")
-        f.write(f"last bid: {self.last_bid}\n")
-        f.write(f"last pass: {self.last_pass}\n")
-        f.write(f"dealer: {self.dealer}\n")
-        f.write(f"agent team: {self.agent_team}\n")
+            log.debug(f"{position[i]}: ")
+            log.debug(f"S  :{self.features[i][:13]}")
+            log.debug(f"H  :{self.features[i][13:26]}")
+            log.debug(f"D  :{self.features[i][26:39]}")
+            log.debug(f"C  :{self.features[i][39:52]}")
+            log.debug(f"HCP:{self.features[i][52:57]}")
+            log.debug(f"len:{self.features[i][57:61]}")
+            log.debug(f"bal:{self.features[i][61]}")
+            log.debug(f"vul:{self.features[i][62:66]}")
+        log.debug(f"features sequence: {self.bidding_sequence}")
+        log.debug(f"last doubled: {self.last_doubled}")
+        log.debug(f"last bid: {self.last_bid}")
+        log.debug(f"last pass: {self.last_pass}")
+        log.debug(f"dealer: {self.dealer}")
+        log.debug(f"agent team: {self.agent_team}")

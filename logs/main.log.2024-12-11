@@ -1,0 +1,6 @@
+2024-12-11 02:56:47 [INFO] [__main__]: starting process
+2024-12-11 02:56:47 [INFO] [__main__]: running on process ID = 864
+2024-12-11 02:56:47 [INFO] [__main__]: use command: "kill -SIGUSR1 864" to select option
+2024-12-11 02:56:47 [INFO] [__main__]: initialize...
+2024-12-11 11:21:10 [INFO] [__main__]: starting process
+2024-12-11 11:21:10 [INFO] [__main__]: running on process ID = 876

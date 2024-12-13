@@ -1,0 +1,16 @@
+2024-12-09 14:03:52 [INFO] [__main__]: starting process
+2024-12-09 14:03:52 [INFO] [__main__]: running on process ID = 3297
+2024-12-09 14:03:52 [INFO] [__main__]: use command: "kill -SIGUSR1 3297" to select option
+2024-12-09 14:03:52 [INFO] [__main__]: use command: "kill -SIGUSR2 3297" to select option
+2024-12-09 14:05:02 [INFO] [__main__]: 
+2024-12-09 14:05:06 [INFO] [__main__]: USER COMMAND: resume
+2024-12-09 14:09:11 [INFO] [__main__]: starting process
+2024-12-09 14:09:11 [INFO] [__main__]: running on process ID = 3309
+2024-12-09 14:09:11 [INFO] [__main__]: use command: "kill -SIGUSR1 3309" to select option
+2024-12-09 14:09:11 [INFO] [__main__]: use command: "kill -SIGUSR2 3309" to select option
+2024-12-09 14:09:22 [INFO] [__main__]: process paused
+2024-12-09 14:09:32 [INFO] [__main__]: 
+2024-12-09 14:09:35 [INFO] [__main__]: USER COMMAND: resume
+2024-12-09 14:09:35 [INFO] [__main__]: process resumed
+2024-12-09 14:09:50 [INFO] [__main__]: process paused
+2024-12-09 14:09:54 [INFO] [__main__]: process terminated

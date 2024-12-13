@@ -31,5 +31,19 @@ console_handler.setLevel(logging.INFO)
 console_handler.setFormatter(time_formatter)
 root_logger.addHandler(console_handler)
 
-def get_logger(name: str = None):
+def get_logger(name: str = None, log_file:str = None):#with given path, the logger works independent
     return logging.getLogger(name) 
+    #if log_file == None:
+    #    return logging.getLogger(name) 
+    #else:
+    #    logger = logging.getLogger(name)
+    #    logger.propagate = False
+    #    handler = logging.FileHandler(
+    #        filename=os.path.join(LOG_DIR, log_file),
+    #        mode='a',  # Append mode
+    #        encoding='utf-8'
+    #    )
+    #    handler.setFormatter(time_formatter)
+    #    handler.setLevel(logging.DEBUG)
+    #    logger.addHandler(handler)
+    #    return logger

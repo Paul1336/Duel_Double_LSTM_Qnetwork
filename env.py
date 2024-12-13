@@ -14,6 +14,14 @@ class Experiance():
     reward: float
     next_state: State
     terminated: int
+    def log(self, f):
+        f.write("curent state: \n")
+        self.state.log(f)
+        f.write(f"action: {self.action}\n")
+        f.write(f"reward: {self.reward}\n")
+        f.write("next state: \n")
+        self.next_state.log(f)
+        f.write(f"terminated: {self.terminated}\n")
 
 class Env():
     n_actions:int = 38
@@ -98,3 +106,6 @@ class Env():
 
     def update_networks(self, Qnetwork):
         self.Qnetwork = Qnetwork
+
+    def log(self):
+        pass
