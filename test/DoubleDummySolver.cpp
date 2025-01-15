@@ -161,7 +161,11 @@ ddResponse test(char *deal, int vul[2], int suit, int level, int doubled, int de
     {
         cur_score_NS *= -1;
     }
+    printf("cur_score_NS: %d\n", cur_score_NS);
+    printf("best_score_NS: %d\n", best_score_NS);
     int diff = (cur_score_NS - best_score_NS) / 10;
+    printf("diff: %d\n", diff);
+    sign = 1;
     if (diff < 0)
     {
         sign = -1;
@@ -169,6 +173,7 @@ ddResponse test(char *deal, int vul[2], int suit, int level, int doubled, int de
     }
     if (diff > 400)
         diff = 400;
+    printf("%d, %d", diff, sign);
     if (view % 2 == 0)
     {
         res.imp_loss = sign * IMP_CHART[diff];
@@ -182,6 +187,7 @@ ddResponse test(char *deal, int vul[2], int suit, int level, int doubled, int de
 
 int main()
 {
-
+    int vul[2] = {1, 1};
+    printf("imp loss: %d", test("N:AKQJT.AKQJT.A.K2 32.2.65432.AQJT9 7654.6543.87.876 98.987.KQJT9.543", vul, 4, 2, 0, 0, 0).imp_loss);
     return 0;
 }
