@@ -29,9 +29,7 @@ class Env():
     n_actions:int = 38
     current_state:State = None
     reward_calculater = None
-    Qnetwork = None
     def __init__ (self):
-        self.Qnetwork
         self.reset()
 
     def reset (self)-> State:
@@ -39,11 +37,34 @@ class Env():
         self.current_state = new_game.new_state
         self.reward_calculater = (RewardCalculator(new_game.vul, new_game.pbn))
 
+    @classmethod
+    def action_space(state: State)->list:
+        if state.last_bid == 1 or state.last_doubled == 0:
+            return list({0} | set(range(3, 37)))
+        elif state.last_doubled < state.last_bid:
+            if state.last_doubled == 2 or state.bidding_sequence[-state.last_doubled] == 2:
+                return list({0} | set(range(state.bidding_sequence[-state.last_bid]+1, 37)))
+            else:
+                return list({0, 2} | set(range(state.bidding_sequence[-state.last_bid]+1, 37)))
+        else:
+            if state.last_bid == 2:
+                return list({0} | set(range(state.bidding_sequence[-state.last_bid]+1, 37)))
+            else:
+                return list({0, 1} | set(range(state.bidding_sequence[-state.last_bid]+1, 37)))
+
+    @classmethod
+    def random_action(state: State)->int:
+        return random.choice(Env.action_space(state))
+
     def record_bidding (self, action:int):
+        _terminated = 0
         self.current_state.bidding_sequence.append(action)
-        self.current_state.last_bid += 1
-        self.current_state.last_doubled+=1
-        self.current_state.last_pass+=1
+        if self.current_state.last_bid > 0:
+            self.current_state.last_bid += 1
+        if self.current_state.last_doubled > 0:
+            self.current_state.last_doubled+=1
+        if self.current_state.last_pass > 0:
+            self.current_state.last_pass+=1
         _terminated = 0
         if action>2:
             self.current_state.last_bid = 1
@@ -51,39 +72,20 @@ class Env():
             self.current_state.last_doubled = 1
         else:
             self.current_state.last_pass = 1
-            if action == 0 and self.current_state.last_bid > 1 and self.current_state.last_doubled > 1:
+            if (len(self.current_state.bidding_sequence) == 4 and self.current_state.last_bid == 0) or (self.current_state.last_bid > 3 and self.current_state.last_doubled > 3):
                 _terminated = 1
         return _terminated
 
     def step (self, action:int)-> Tuple[State, float, int]:# next_state, reward, terminate
-        _terminated = 0
         _reward = 0
-        if self.record_bidding(action) == 1:
-            _terminated = 1
-            _reward = self.reward_calculater.imp_diff(self.current_state)
-        else:
-            #pred
-            if self.record_bidding(self.predict()) == 1:
-                _terminated = 1
-                _reward = self.reward_calculater.imp_diff(self.current_state)
+        _terminated = self.record_bidding(action)
         
+        if _terminated == 1:
+            _reward = self.reward_calculater.imp_diff(self.current_state)       
         return self.current_state, _reward, _terminated
         #tba, calc reward with reward.imploss() method and predict next state with qnetwork
 
-    @classmethod
-    def random_action(state: State)->int:
-        if state.last_bid == 0:
-            return random.choice(list({0} | set(range(3, 37))))
-        elif state.last_doubled < state.last_bid:
-            if state.last_doubled == 2 or state.bidding_sequence[-state.last_doubled] == 2:
-                return random.choice(list({0} | set(range(state.bidding_sequence[-state.last_bid]+1, 37))))
-            else:
-                return random.choice(list({0, 2} | set(range(state.bidding_sequence[-state.last_bid]+1, 37))))
-        else:
-            if state.last_bid == 2:
-                return random.choice(list({0} | set(range(state.bidding_sequence[-state.last_bid]+1, 37))))
-            else:
-                return random.choice(list({0, 1} | set(range(state.bidding_sequence[-state.last_bid]+1, 37))))
+    
 
     def log(self):
         pass

@@ -37,6 +37,7 @@ class RewardCalculator:
         self.dll.ddAnalize.restype = ddResponse
 
     def imp_diff (self, state:State) -> float:
+        return -1
         # calculete the imp loss of the last bid in the bidding sequence
         try:
             log = logger.get_logger(__name__)

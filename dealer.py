@@ -37,7 +37,6 @@ class Dealer():
             hand = sorted(deck[13*i:13*(i+1)])
             suit = 0
             suit_len = 0
-            bal = True
             for card in hand:
                 _cards[i][card] = 1
                 while(card//13 > suit):
@@ -51,10 +50,6 @@ class Dealer():
                 _extract_features[i][suit] += CARD_HCP[card%13]
                 suit_len += 1
             _extract_features[i][5+suit] = suit_len
-            if(suit_len < 2):
-                bal = False
-            if bal is True:
-                _extract_features[i][9] = 1
             for j in range(0, 4):
                 _extract_features[i][4] += _extract_features[i][j]
             while suit < 3:
@@ -62,6 +57,12 @@ class Dealer():
                 _deal.pbn += "."
             if i<3:
                 _deal.pbn+=" "
+            bal = True
+            for j in range(0, 4):
+                if _extract_features[i][j+5] < 2:
+                    bal = False
+            if bal is True:
+                _extract_features[i][9] = 1
         _state = State()
 
         _state.bidding_sequence = torch.tensor([])

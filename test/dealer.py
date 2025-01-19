@@ -3,10 +3,11 @@ from dealer import Dealer, CARD_NAMES
 import numpy as np
 import scipy.stats as stats
 import matplotlib.pyplot as plt
+import torch
 
 class TestDealer(unittest.TestCase):
     def test_1000_new_game_pbn(self):
-        num_simulations = 100
+        num_simulations = 1000
         card_to_index = {card: index for index, card in enumerate(CARD_NAMES)}
         HCP_weights = torch.tensor([4, 3, 2, 1])
         VUL_weight = torch.tensor([0, 1, 2, 3])
@@ -77,7 +78,7 @@ class TestDealer(unittest.TestCase):
 
                         self.assertEqual(
                             state.features[i][suit_index*13+card_to_index[card]].item(), 1,
-                            f"Feature mismatch: Player {i}, Suit {suit}, Card {card}, PBN {pbn}"
+                            f"Feature mismatch: Player {i}, Suit {suit_name}, Card {card}, PBN {pbn}"
                         )
                 for k in range (0, 4):
                     self.assertEqual(
@@ -96,7 +97,7 @@ class TestDealer(unittest.TestCase):
                 if not torch.all(state.features[i][57:61] > 1):
                     self.assertEqual(
                         state.features[i][61].item(), 0,
-                        f"tensor[61] should be 0 when any of tensor[57:60] <= 1, but got {state.features[i][61].item()}"
+                        f"tensor[61] should be 0 when any of tensor[57:60] <= 1, but got {state.features[i][61].item()}, feature: {state.features[i]}, i={i}, pbn = {pbn}"
                     )
                 else:
                    self.assertEqual(
