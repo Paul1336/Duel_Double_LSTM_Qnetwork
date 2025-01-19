@@ -56,8 +56,9 @@ class Env():
     def random_action(state: State)->int:
         return random.choice(Env.action_space(state))
 
-    def record_bidding (self, action:int):
+    def step (self, action:int)-> Tuple[State, float, int]:# next_state, reward, terminate
         _terminated = 0
+        _reward = 0
         self.current_state.bidding_sequence.append(action)
         if self.current_state.last_bid > 0:
             self.current_state.last_bid += 1
@@ -74,18 +75,8 @@ class Env():
             self.current_state.last_pass = 1
             if (len(self.current_state.bidding_sequence) == 4 and self.current_state.last_bid == 0) or (self.current_state.last_bid > 3 and self.current_state.last_doubled > 3):
                 _terminated = 1
-        return _terminated
-
-    def step (self, action:int)-> Tuple[State, float, int]:# next_state, reward, terminate
-        _reward = 0
-        _terminated = self.record_bidding(action)
-        
-        if _terminated == 1:
-            _reward = self.reward_calculater.imp_diff(self.current_state)       
-        return self.current_state, _reward, _terminated
-        #tba, calc reward with reward.imploss() method and predict next state with qnetwork
-
-    
+                _reward = self.reward_calculater.imp_diff(self.current_state)   
+        return self.current_state, _reward, _terminated   
 
     def log(self):
         pass

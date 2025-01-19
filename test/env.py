@@ -23,45 +23,45 @@ class TestEnv(unittest.TestCase):
 
     def test_record_bidding(self):
         state = self.env.current_state
-        self.env.record_bidding(0)
+        self.env.step(0)
         self.assertEqual(state.last_bid, 0, "Last bid should be 0 after the first pass.")
         self.assertEqual(state.last_pass, 1, "Last pass should be updated to 1 after a pass.")
         self.assertEqual(state.last_doubled, 1, "Last doubled should be 0 after the first passd.")
-        self.env.record_bidding(4)
+        self.env.step(4)
         self.assertEqual(state.last_bid, 1, "Last bid should be updated to 1 after a normal bid.")
         self.assertEqual(state.last_pass, 2, "Last pass should be updated to 2 after a normal bid.")
         self.assertEqual(state.last_doubled, 0, "Last doubled should be 0 before any double.")
-        self.env.record_bidding(0)
+        self.env.step(0)
         self.assertEqual(state.last_bid, 2, "Last bid should be updated to 2 after a pass.")
         self.assertEqual(state.last_pass, 1, "Last pass should be updated to 1 after a pass.")
         self.assertEqual(state.last_doubled, 0, "Last doubled should be 0 before any double.")
-        self.env.record_bidding(0)
+        self.env.step(0)
         self.assertEqual(state.last_bid, 3, "Last bid should be updated to 3 after two pass.")
         self.assertEqual(state.last_pass, 1, "Last pass should be updated to 1 after a pass.")
         self.assertEqual(state.last_doubled, 0, "Last doubled should be 0 before any double.")
-        self.env.record_bidding(1)
+        self.env.step(1)
         self.assertEqual(state.last_bid, 4, "Last bid should be updated to 4 after two pass and a double.")
         self.assertEqual(state.last_pass, 2, "Last pass should be updated to 2 after a double.")
         self.assertEqual(state.last_doubled, 1, "Last doubled should be updated to 1 after a double.")
-        self.env.record_bidding(2)
+        self.env.step(2)
         self.assertEqual(state.last_bid, 1, "Last bid should be updated to 5 after two pass, a double, and a redouble.")
         self.assertEqual(state.last_pass, 3, "Last pass should be updated to 3 after a double and a redouble.")
         self.assertEqual(state.last_doubled, 1, "Last doubled should be updated to 1 after a redouble.")
-        self.env.record_bidding(7)
+        self.env.step(7)
         self.assertEqual(state.last_bid, 1, "Last bid should be updated to 1 after a normal bid.")
         self.assertEqual(state.last_pass, 4, "Last pass should be updated to 4 after a double, a redouble, and a normal bid.")
         self.assertEqual(state.last_doubled, 2, "Last redouble should be updated to 2 after a normal bid.")
-        self.env.record_bidding(0)
+        self.env.step(0)
         self.assertEqual(state.last_bid, 2, "Last bid should be updated to 2 a pass.")
         self.assertEqual(state.last_pass, 1, "Last pass should be updated to 1 after a pass.")
         self.assertEqual(state.last_doubled, 3, "Last redouble should be updated to 2 after a normal bid and a double.")
-        self.env.record_bidding(0)
-        self.assertEqual(self.env.record_bidding(0), 1, "Shoud return terminate = 0 after 3 passes")
+        self.env.step(0)
+        self.assertEqual(self.env.step(0), 1, "Shoud return terminate = 0 after 3 passes")
         self.env.reset()
-        self.env.record_bidding(0)
-        self.env.record_bidding(0)
-        self.env.record_bidding(0)
-        self.assertEqual(self.env.record_bidding(0), 1, "Shoud return terminate = 0 after 3 passes")
+        self.env.step(0)
+        self.env.step(0)
+        self.env.step(0)
+        self.assertEqual(self.env.step(0), 1, "Shoud return terminate = 0 after 3 passes")
         
     def test_step(self):
         self.env.reset()
@@ -75,6 +75,40 @@ class TestEnv(unittest.TestCase):
         self.assertLessEqual(terminated, 1, "Terminated should be 0 or 1.")
 
    
+def play_multiple_games(env: Env, num_games: int):
+
+    results = []
+
+    for game in range(num_games):
+        print(f"Starting game {game + 1}...")
+        env.reset()
+        game_result = {
+            "actions": [],
+            "reward": 0
+        }
+        terminated = 0
+        print("initial state: ", env.current_state)
+        while not terminated:
+            action = Env.random_action(env.current_state)
+            game_result["actions"].append(action)
+
+            next_state, reward, terminated = env.step(action)
+            game_result["reward"] += reward
+            print(f"current state: sequence {env.current_state.bidding_sequence}, last_bid {env.current_state.last_bid}, last_pass {env.current_state.last_pass}, last_double {env.current_state.last_double}")
+
+        results.append(game_result)
+        print(f"Game {game + 1} finished with reward: {game_result['reward']}, actions: {game_result['actions']}")
+
+    return results
+
 
 if __name__ == "__main__":
     unittest.main()
+    env = Env()
+    num_games = 100
+    results = play_multiple_games(env, num_games)
+
+    for i, result in enumerate(results):
+        print(f"Game {i + 1}:")
+        print(f"  Actions: {result['actions']}")
+        print(f"  Total Reward: {result['reward']}")
