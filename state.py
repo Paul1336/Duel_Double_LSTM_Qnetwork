@@ -11,7 +11,6 @@ class State:
     last_bid: int = 0
     last_pass: int = 0
     dealer: int = 0
-    agent_team: int = 0
 
     def log(self):
         log = logger.get_logger(__name__)

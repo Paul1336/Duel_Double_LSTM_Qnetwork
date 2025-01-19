@@ -8,6 +8,8 @@ import math
 import logger
 import signal
 import os
+import copy
+from datetime import datetime
 # my customize lib
 from agent import DuelDDQNAgent
 from model import Duel_DDNQ
@@ -19,6 +21,7 @@ DISCOUNT_FACTOR = 0.99
 EPS_START = 0.9
 EPS_END = 0.05
 EPS_DECAY = 1000
+CREATE_MEMORY_EPSILON = 0.5
 TARGET_UPDATE = 10
 MEMORY_SIZE = 10000
 MIN_MEMORY_SIZE = 64
@@ -53,7 +56,6 @@ class EpsilonScheduler():
 
 class ReplayMemory():
     buffer: collections.deque[Experiance]
-    max_size = None
     def __init__(self, max_size:int):
         self.buffer = collections.deque(maxlen=max_size)
         self.max_size = max_size
@@ -86,48 +88,89 @@ class ReplayMemory():
                 log.debug(f"--- Experience {i} ---")
                 exp.log()
 
-
-def train_agent(episode):
-    epsilon_scheduler.update(episode)
+def alternate_turns(epsilon = 0.5, training = False, episode = 0):
+    _states = []
+    _actions = []
+    _rewards = []
+    _terminated = []
     state = env.reset()
+    turn = state.dealer
     terminated = False
-    total_reward = 0
-    while not terminated:
-        action = agent.choose_action(state, EpsilonScheduler.epsilon)
+    reward = 0
+    while terminated is not 1:
+        action = agents[turn].choose_action(state, epsilon)
         next_state, reward, terminated = env.step(action)
-        memory.append(Experiance(state, action, reward, next_state, terminated))
-        state = next_state
-        total_reward += reward
+        _states.append(state)
+        _actions.append(action)
+        _rewards.append(reward)
+        _terminated.append(terminated)
 
-        if len(memory) >= MIN_MEMORY_SIZE:
-            exp = memory.sample()
-            agent.train(exp)
+        turn = (turn+1)%2
+        state = next_state
+        if training is True:
+           if len(memory) >= MIN_MEMORY_SIZE:
+                exp = memory.sample()
+                agent[turn].train(exp)
+    _rewards[-2] = -reward
+    _terminated[-2] = 1
+    for i in range (len(_states)-2):
+        memory.append(Experiance(episode, _states[i], _actions[i], _rewards[i], _states[i+2], _terminated[i]))
+    memory.append(Experiance(episode, _states[-2], _actions[-2], _rewards[-2], state, 1))
+    memory.append(Experiance(episode, _states[-1], _actions[-1], _rewards[-1], state, 1))
+    if turn == 0:
+        return - reward
+    else:
+        return reward
+        
+
+def train_agents():
+    epsilon_scheduler.update(episode)
+    total_reward = alternate_turns(epsilon = epsilon_scheduler.epsilon, training = True, episode = episode)
     if (episode+1) % TARGET_UPDATE == 0:
         agent.synchronous_networks()
-    env.update_networks(agent.get_network())
-    log.info(f"Episode: {episode+1}, Total Reward: {total_reward}")
+    log.info(f"Episode: {episode}, Total Reward: {total_reward}")
     
 
-def build_memory(max_size, min_size):
-    memory = ReplayMemory(max_size)
+def build_memory(min_size, initial_epsilon):
     while len(memory) < min_size:
-        state = env.reset()
-        terminated = False
-        while not terminated:
-            action = agent.choose_action(state, EpsilonScheduler.epsilon)
-            next_state, reward, terminated = env.step(action)
-            memory.append(Experiance(state, action, reward, next_state, terminated))
-            state = next_state
-    return memory
+       alternate_turns(epsilon = initial_epsilon, training = False, episode = 0)
 
 def log_process_state():
     log.info(f"log process states: ")
-    agent.log()
     env.log()
     epsilon_scheduler.log()
     memory.log()
 
-def option_handler(signum, frame):
+def save_model():
+    log.info(f"save currents models: ")
+    base_dir = "./models"
+    if not os.path.exists(base_dir):
+        os.makedirs(base_dir)
+    today_date = datetime.now().strftime("%Y%m%d")
+    existing_files = [
+        f for f in os.listdir(base_dir)
+        if f.startswith(today_date) and f.endswith(f".pth")
+    ]
+    existing_indices = []
+    for f in existing_files:
+        try:
+            index = int(f.split("_")[1])  # date_time_<...>
+            existing_indices.append(index)
+        except (IndexError, ValueError):
+            continue
+    next_index = max(existing_indices) + 1
+    try:
+        new_file_path = os.path.join(base_dir, f"{today_date}_{next_index}_alpha.pth")
+        agents[0].save_model(new_file_path)
+        log.info(f"the first model saved as new_file_path")
+        new_file_path = os.path.join(base_dir, f"{today_date}_{next_index}_beta.pth")
+        agents[1].save_model(new_file_path)
+        log.info(f"the second model saved as new_file_path")
+    except Exception as e:
+        log.error(f"main.save_model() fail to save the models: {e}")
+        
+
+def option_handler(_signum, _frame):
     global running
     running = False
     log.info("process paused")
@@ -140,7 +183,7 @@ if __name__ == "__main__":
     pid = os.getpid()
     log.info(f"running on process ID = {pid}")
     print(f"use command: \"kill -SIGUSR1 {pid}\" to go to the menu")
-    print("initialize...")
+    log.info("initialize...")
     pretrained_model = torch.load(PRETRAINED_MODEL_PATH)
     #TBA
     log.info(f"load pretrained model: {PRETRAINED_MODEL_PATH}")
@@ -151,28 +194,31 @@ if __name__ == "__main__":
     optimizer = optim.Adam(Q_model.parameters(), lr=LEARNING_RATE)
     log.info(f"initialize adam optimizer, learning rate = {LEARNING_RATE}")
     agent = DuelDDQNAgent(Q_model, optimizer, DISCOUNT_FACTOR)
-    log.info(f"build agent, discount factor = {DISCOUNT_FACTOR}, target q update per {TARGET_UPDATE} epochs")
-    env = Env(agent.get_network())
+    agents = [copy.deepcopy(agent), copy.deepcopy(agent)]
+    log.info(f"build agent list, discount factor = {DISCOUNT_FACTOR}, target q update per {TARGET_UPDATE} epochs")
+    env = Env()
     log.info(f"build enviroment")
     epsilon_scheduler = EpsilonScheduler(initial_val=EPS_START, min_val=EPS_END, decay_rate=EPS_DECAY)
     log.info(f"build scheduler, initial value = {EPS_START}, minimun value = {EPS_END}, decay rate = {EPS_DECAY}")
-    memory = build_memory(MEMORY_SIZE, MIN_MEMORY_SIZE)
-    log.info(f"build replay memory including experience {MIN_MEMORY_SIZE}, max size {MEMORY_SIZE}")
+    memory = ReplayMemory(MEMORY_SIZE)
+    build_memory(MIN_MEMORY_SIZE, CREATE_MEMORY_EPSILON)
+    log.info(f"build replay memory including experience {MIN_MEMORY_SIZE}, max size {MEMORY_SIZE}, epsilon used {CREATE_MEMORY_EPSILON}")
     print(f"project initialized, start training agent...")
     running = True
     run_forever = True
     steps_to_run = 0
-    episode = 0
+    episode = 1
     while True:
         if running:
             # training loop
+            log.info(f"episode = {episode}")
             try:
                 if run_forever:
-                    train_agent(episode)
+                    train_agents()
                     episode+=1
                 else:
                     if steps_to_run > 0:
-                        train_agent(episode)
+                        train_agents()
                         episode+=1
                         steps_to_run -= 1
                     else:
@@ -198,8 +244,7 @@ if __name__ == "__main__":
             elif cmd == 'l':
                 log_process_state()                
             elif cmd == 's':
-                agent.save_model()  
-                break
+                save_model()
             elif cmd == 'q':
                 log.info("process terminated")
                 break

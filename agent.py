@@ -1,6 +1,8 @@
 import torch
 import numpy as np
+import copy
 from env import Env, State, Experiance
+import logger
 
 class DuelDDQNAgent():
     Q_main = None
@@ -13,6 +15,7 @@ class DuelDDQNAgent():
         self.Q_target = Q_model
         self.optimizer = optimizer
         self.discount_factor = discount_factor
+        self.log = logger.get_logger(__name__)
 
     def choose_action(self, state: State, epsilon: float) ->int:
         if np.random.uniform(0, 1) < epsilon:
@@ -22,10 +25,7 @@ class DuelDDQNAgent():
                 return self.pred_model(state, "main")
             
     def synchronous_networks(self):
-        self.Q_target = self.Q_main
-
-    def get_network(self):
-        return self.Q_target
+        self.Q_target = copy.deepcopy(self.Q_main)
 
     def pred_model(self, state, target) -> State:
         if target == "target":
@@ -52,5 +52,9 @@ class DuelDDQNAgent():
     def log(self):
         pass
 
-    def save_model(self):
-        pass
+    def save_model(self, path):
+        try:
+            torch.save(self.Q_main.state_dict(), path)
+            self.log.info(f"Model saved successfully to {path}")
+        except Exception as e:
+            raise RuntimeError(f"agent.save_model() Failed to save model to {path}: {e}") from e

@@ -54,8 +54,11 @@ The dataset and Experiment Log:
 - **`action/bid`** int, 0 = p, 1 = d, 2 = r, 3 = 1c...37 = 7N
 
 - **`level`**: actual level -1
+
 - **`USE_CARD_DETAIL`**: if feature fields have cards info()
 
 # Note
 
 the current structure of reward recalculate par score and dd answer every time we call the imp_diff() in reward.py, if once the scoring value for q change to revaluatio each step instead of the teminated state, the method imp_diff() should be optimized.
+
+g++ -std=c++11 -O3 -I./include DoubleDummySolver.cpp -L. -ldds -o DoubleDummySolver

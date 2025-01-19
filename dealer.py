@@ -57,6 +57,9 @@ class Dealer():
                 _extract_features[i][9] = 1
             for j in range(0, 4):
                 _extract_features[i][4] += _extract_features[i][j]
+            while suit < 3:
+                suit += 1
+                _deal.pbn += "."
             if i<3:
                 _deal.pbn+=" "
         _state = State()
