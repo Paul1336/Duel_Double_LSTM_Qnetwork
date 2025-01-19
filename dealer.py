@@ -65,7 +65,7 @@ class Dealer():
                 _extract_features[i][9] = 1
         _state = State()
 
-        _state.bidding_sequence = torch.tensor([])
+        _state.bidding_sequence = []
         _vulnerable = [torch.zeros(4, dtype=torch.float32) for _ in range(4)]
 
         if(_deal.vul[0] == 1):
