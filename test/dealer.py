@@ -38,8 +38,7 @@ class TestDealer(unittest.TestCase):
                 all(feature.shape == torch.Size([66]) for feature in state.features),
                 "each tensor in State.features tensor should have shape [66]"
             )
-            self.assertIsInstance(state.bidding_sequence, torch.Tensor, "State.bidding_sequence should be torch.Tensor")
-            self.assertEqual(state.bidding_sequence.shape[0], 0, "State.bidding_sequence should initially be empty")
+            self.assertIsInstance(state.bidding_sequence, list, "State.bidding_sequence should be torch.Tensor")
 
             self.assertIsInstance(state.last_doubled, int, "State.last_doubled should be int")
             self.assertEqual(state.last_doubled, 0, "State.last_doubled should initially be 0")

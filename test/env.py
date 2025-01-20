@@ -5,13 +5,17 @@ import torch
 import copy
 
 def test_reward(env: Env):
+    print("reward test")
     _env = copy.deepcopy(env)
     zero_cnt = 0
     i = 1
     reward = -1000
-    while _env.current_state.bidding_sequence[-i] == 0:
-        zero_cnt+=1
-        i+=1
+    if len(_env.current_state.bidding_sequence) == 0:
+        zero_cnt = -1
+    else:
+        while _env.current_state.bidding_sequence[-i] == 0:
+            zero_cnt+=1
+            i+=1
     for i in range(0, 3-zero_cnt):
         _, reward, _ = _env.step(0)
     return reward
@@ -118,26 +122,26 @@ class TestEnv(unittest.TestCase):
             zero_cnt = 0
             double_cnt = 0
             max_bid = -1
-            for i in range(0, len(env.current_state.features)):
-                if env.current_state.features[i] == 0:
+            for i in range(0, len(env.current_state.bidding_sequence)):
+                if env.current_state.bidding_sequence[i] == 0:
                     zero_cnt += 1
                 else:
                     zero_cnt = 0
-                if env.current_state.features[i] == 1:
+                if env.current_state.bidding_sequence[i] == 1:
                     self.assertEqual(double_cnt, 0, "shouldn't have double over double")
                     if i > 1:
-                        self.assertNotEqual(env.current_state.features[i-2], 1, "shouldn't double against partner")
-                        self.assertNotEqual(env.current_state.features[i-2], 2, "shouldn't double against partner")
+                        self.assertNotEqual(env.current_state.bidding_sequence[i-2], 1, "shouldn't double against partner")
+                        self.assertNotEqual(env.current_state.bidding_sequence[i-2], 2, "shouldn't double against partner")
                     double_cnt = 1
-                if env.current_state.features[i] == 2:
+                if env.current_state.bidding_sequence[i] == 2:
                     self.assertEqual(double_cnt, 1, "should have double before redouble")
                     if i > 1:
-                        self.assertNotEqual(env.current_state.features[i-2], 1, "shouldn't double against partner")
-                        self.assertNotEqual(env.current_state.features[i-2], 2, "shouldn't double against partner")
-                if env.current_state.features[i] > 2:
+                        self.assertNotEqual(env.current_state.bidding_sequence[i-2], 1, "shouldn't double against partner")
+                        self.assertNotEqual(env.current_state.bidding_sequence[i-2], 2, "shouldn't double against partner")
+                if env.current_state.bidding_sequence[i] > 2:
                     double_cnt = 0
-                    self.assertGreater(env.current_state.features[i], max_bid, "insufficient bid")
-                    max_bid = env.current_state.features[i]
+                    self.assertGreater(env.current_state.bidding_sequence[i], max_bid, "insufficient bid")
+                    max_bid = env.current_state.bidding_sequence[i]
                 self.assertLess(zero_cnt, 4, "continous zero shouldn't exceed 3 time")
 
 
