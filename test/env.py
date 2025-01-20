@@ -4,6 +4,18 @@ from state import State
 import torch
 import copy
 
+def test_reward(env: Env):
+    _env = copy.deepcopy(env)
+    zero_cnt = 0
+    i = 1
+    reward = -1000
+    while _env.current_state.bidding_sequence[-i] == 0:
+        zero_cnt+=1
+        i+=1
+    for i in range(0, 3-zero_cnt):
+        _, reward, _ = _env.step(0)
+    return reward
+
 #random, reward
 class TestEnv(unittest.TestCase):
 
@@ -77,40 +89,57 @@ class TestEnv(unittest.TestCase):
         self.assertLessEqual(terminated, 1, "Terminated should be 0 or 1.")
 
    
-def play_multiple_games(env: Env, num_games: int):
-
-    results = []
-
-    for game in range(num_games):
-        print(f"Starting game {game + 1}...")
-        env.reset()
-        game_result = {
-            "actions": [],
-            "reward": 0
-        }
-        terminated = 0
-        print("initial state: ", env.current_state)
-        while not terminated:
-            action = Env.random_action(env.current_state)
-            game_result["actions"].append(action)
-            print(f"action:{action}, last_doubled={env.current_state.last_doubled}, last_bid={env.current_state.last_bid}, last_pass={env.current_state.last_pass}")
-            next_state, reward, terminated = env.step(action)
-            game_result["reward"] += reward
-            #print(f"current state: sequence {env.current_state.bidding_sequence}, last_bid {env.current_state.last_bid}, last_pass {env.current_state.last_pass}, last_doubled {env.current_state.last_doubled}")
-        print("terminate state: ", env.current_state)
-        results.append(game_result)
-        print(f"Game {game + 1} finished with reward: {game_result['reward']}, actions: {game_result['actions']}")
-
-    return results
+    def test_play_multiple_games(self):
+        num_games = 1
+        results = []
+        env = Env()
+        for game in range(num_games):
+            print(f"Starting game {game + 1}...")
+            env.reset()
+            game_result = {
+                "actions": [],
+                "reward": 0
+            }
+            terminated = 0
+            print("initial state: ", env.current_state)
+            print(f"reward = {test_reward(env)}")
+            while not terminated:
+                action = Env.random_action(env.current_state)
+                game_result["actions"].append(action)
+                print(f"action:{action}, last_doubled={env.current_state.last_doubled}, last_bid={env.current_state.last_bid}, last_pass={env.current_state.last_pass}")
+                next_state, reward, terminated = env.step(action)
+                print(f"reward = {test_reward(env)}")
+                game_result["reward"] += reward
+                #print(f"current state: sequence {env.current_state.bidding_sequence}, last_bid {env.current_state.last_bid}, last_pass {env.current_state.last_pass}, last_doubled {env.current_state.last_doubled}")
+            print("terminate state: ", env.current_state)
+            print(f"reward = {test_reward(env)}")
+            results.append(game_result)
+            print(f"Game {game + 1} finished with reward: {game_result['reward']}, actions: {game_result['actions']}")
+            zero_cnt = 0
+            double_cnt = 0
+            max_bid = -1
+            for i in range(0, len(env.current_state.features)):
+                if env.current_state.features[i] == 0:
+                    zero_cnt += 1
+                else:
+                    zero_cnt = 0
+                if env.current_state.features[i] == 1:
+                    self.assertEqual(double_cnt, 0, "shouldn't have double over double")
+                    if i > 1:
+                        self.assertNotEqual(env.current_state.features[i-2], 1, "shouldn't double against partner")
+                        self.assertNotEqual(env.current_state.features[i-2], 2, "shouldn't double against partner")
+                    double_cnt = 1
+                if env.current_state.features[i] == 2:
+                    self.assertEqual(double_cnt, 1, "should have double before redouble")
+                    if i > 1:
+                        self.assertNotEqual(env.current_state.features[i-2], 1, "shouldn't double against partner")
+                        self.assertNotEqual(env.current_state.features[i-2], 2, "shouldn't double against partner")
+                if env.current_state.features[i] > 2:
+                    double_cnt = 0
+                    self.assertGreater(env.current_state.features[i], max_bid, "insufficient bid")
+                    max_bid = env.current_state.features[i]
+                self.assertLess(zero_cnt, 4, "continous zero shouldn't exceed 3 time")
 
 
 if __name__ == "__main__":
-    
-    env = Env()
-    num_games = 1
-    results = play_multiple_games(env, num_games)
-    for i, result in enumerate(results):
-        print(f"Game {i + 1}:")
-        print(f"  Actions: {result['actions']}")
-        print(f"  Total Reward: {result['reward']}")
     unittest.main()
