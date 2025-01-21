@@ -31,7 +31,7 @@ class RewardCalculator:
             if platform.system() == "Windows":
                 self.dll = ctypes.CDLL(DLL_PATH)
             else:
-                print(SO_PATH)
+                #print(SO_PATH)
                 self.dll = ctypes.CDLL(SO_PATH)
         except Exception as e:
             raise RuntimeError(f"RewardCalculator.init() fail to load the .dll/.so: {e}") from e
@@ -55,25 +55,28 @@ class RewardCalculator:
             try:
                 log = logger.get_logger(__name__)
                 AP_hand = False
-                suit = -1 # C, D, H, S
-                level = -1 #0~6
-                doubled = -1
+                suit = 0 # C, D, H, S
+                level = 0 #0~6
+                doubled = 0
                 dealer = -1 #NESW
                 view = -1 #NS/EW
-                if len(state.bidding_sequence) <= 4:
+                if len(state.bidding_sequence) <= 4 and state.last_bid==0:
                     AP_hand = True
                 else:
                     view = (len(state.bidding_sequence) + state.dealer +1) % 2
 
                     suit = (state.bidding_sequence[-state.last_bid]-3) % 5
                     level = (state.bidding_sequence[-state.last_bid]-3) // 5
-                    if state.last_bid > state.last_doubled:
+                    if state.last_bid > state.last_doubled and state.last_doubled != 0:
                         doubled = state.bidding_sequence[-state.last_doubled]
                     else:
                         doubled = 0
                     for index, value in enumerate(state.bidding_sequence):
-                        if (index + state.dealer)%2 == view:
+                        #print("index: ", index, "value: ", value)
+                        if (index + state.dealer)%2 == state.dealer%2:
+                            #print("alpha, value: ", value, "suit: ", suit)
                             if (value-3)%5 == suit:
+                                #print("beta")
                                 dealer = (index+state.dealer)%4
                                 break
                 #print("*self.vul", *self.vul)

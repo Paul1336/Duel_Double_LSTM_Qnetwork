@@ -54,14 +54,28 @@ extern "C" __attribute__((visibility("default"))) ddResponse ddAnalize(char *dea
     ddResponse res;
     ddTableDealPBN _deal;
     strcpy(_deal.cards, deal);
-    printf("_deal : %s\n", _deal.cards);
+    printf("In .cpp, get info: \npbn: %s\n", _deal.cards);
+    printf("vul: [NS: %d, EW: %d], AP_hand: %d, suit: %d, level: %d, doubled: %d, dealer: %d, view: %d\n", vul[0], vul[1], AP_hand, suit, level, doubled, dealer, view);
     ddTableResults _result;
     res.error_type_calc = CalcDDtablePBN(_deal, &_result);
     if (res.error_type_calc != 1)
     {
         return res;
     }
-
+    if (AP_hand == 1)
+    {
+        for (int i = 0; i < 5; i++)
+        {
+            int k = 4;
+            if (i < 4)
+                k = 3 - i;
+            for (int j = 0; j < 4; j++)
+            {
+                printf("%d ", _result.resTable[k][j]);
+            }
+            printf("\n");
+        }
+    }
     int encoded_vul;
     if (vul[0] == 0)
     {
@@ -131,10 +145,22 @@ extern "C" __attribute__((visibility("default"))) ddResponse ddAnalize(char *dea
             printf("dealer: %d, suit: %d, trick: %d\n", i, j, _result.resTable[j][i]);
         }
     }*/
-    int score;
+    int score = -555;
     int my_encoding = 4;
+
+    /*for (int d = 0; d < 3; d++) { // Iterate over double (0-p, 1-d, 2-r)
+        for (int v = 0; v < 2; v++) { // Iterate over vulnerability (0-non, 1-vul)
+            printf("double = %d, vulnerability = %d:\n", d, v);
+            for (int t = 0; t < 13; t++) { // Iterate over tricks
+                printf("  Trick %d: %d\n", t + 1, UNDER_TRICKS_CHART[d][v][t]);
+            }
+            printf("\n");
+        }
+    }*/
+
     if (AP_hand == 1)
     {
+        printf("All passed\n");
         score = 0;
     }
     else
@@ -145,17 +171,22 @@ extern "C" __attribute__((visibility("default"))) ddResponse ddAnalize(char *dea
         }
         if (level + 7 <= _result.resTable[my_encoding][dealer])
         {
+            printf("contract made\n");
             int over_trick = _result.resTable[my_encoding][dealer] - (level + 7);
             score = CONTRACT_VAL[doubled][vul[dealer % 2]][suit][level] + OVERTRICK_VAL[doubled][vul[dealer % 2]][suit] * over_trick;
         }
         else
         {
+            printf("contract failed\n");
             int down = (level + 7) - _result.resTable[my_encoding][dealer] - 1;
-            score = -UNDER_TRICKS_CHART[doubled][vul[dealer % 2]][down];
-            // test[doubled][dealer][suit][level] = down;
+            score = (-1) * (UNDER_TRICKS_CHART[doubled][vul[dealer % 2]][down]);
+            // printf("down: %d, (UNDER_TRICKS_CHART[doubled][vul[dealer % 2]][down]): %d\n",down, UNDER_TRICKS_CHART[doubled][vul[dealer % 2]][down]);
+            // printf("UNDER_TRICKS_CHART[doubled][vul[dealer % 2]][12]: %d", UNDER_TRICKS_CHART[doubled][vul[dealer % 2]][12]);
+            // printf("score = %d\n", score);
+            //  test[doubled][dealer][suit][level] = down;
         }
     }
-
+    printf("current score = %d\n", score);
     int diff = (score - best_score) / 10;
     sign = 1;
     if (diff < 0)
