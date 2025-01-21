@@ -46,22 +46,21 @@ struct ddResponse
     int error_type_par;
 };
 
-extern "C" __attribute__((visibility("default"))) ddResponse ddAnalize(char *deal, int vul[2], int suit, int level, int doubled, int dealer, int view)
+extern "C" __attribute__((visibility("default"))) ddResponse ddAnalize(char *deal, int vul[2], int AP_hand, int suit, int level, int doubled, int dealer, int view)
 {
     SetMaxThreads(0);
     SetResources(0, 0);
+
     ddResponse res;
     ddTableDealPBN _deal;
     strcpy(_deal.cards, deal);
     printf("_deal : %s\n", _deal.cards);
     ddTableResults _result;
-    int error_type_calc = CalcDDtablePBN(_deal, &_result);
-    if (error_type_calc != 1)
+    res.error_type_calc = CalcDDtablePBN(_deal, &_result);
+    if (res.error_type_calc != 1)
     {
         return res;
     }
-
-    return res;
 
     int encoded_vul;
     if (vul[0] == 0)
@@ -87,10 +86,9 @@ extern "C" __attribute__((visibility("default"))) ddResponse ddAnalize(char *dea
         }
     }
     parResults _presp;
-    error_type = Par(&_result, &_presp, encoded_vul);
-    if (error_type != 1)
+    res.error_type_par = Par(&_result, &_presp, encoded_vul);
+    if (res.error_type_par != 1)
     {
-        res.error_type = error_type;
         return res;
     }
     /*printf("NS : %s\n", _presp.parContractsString[0]);
@@ -119,7 +117,7 @@ extern "C" __attribute__((visibility("default"))) ddResponse ddAnalize(char *dea
         ptr++;
     }
     best_score = number * sign;
-    if (dealer % 2 == 1)
+    if (view % 2 == 1)
     {
         best_score *= -1;
     }
@@ -135,7 +133,7 @@ extern "C" __attribute__((visibility("default"))) ddResponse ddAnalize(char *dea
     }*/
     int score;
     int my_encoding = 4;
-    if (suit == -1)
+    if (AP_hand == 1)
     {
         score = 0;
     }
@@ -147,12 +145,12 @@ extern "C" __attribute__((visibility("default"))) ddResponse ddAnalize(char *dea
         }
         if (level + 7 <= _result.resTable[my_encoding][dealer])
         {
-            int over_trick = _result.resTable[suit][dealer] - (level + 7);
+            int over_trick = _result.resTable[my_encoding][dealer] - (level + 7);
             score = CONTRACT_VAL[doubled][vul[dealer % 2]][suit][level] + OVERTRICK_VAL[doubled][vul[dealer % 2]][suit] * over_trick;
         }
         else
         {
-            int down = (level + 7) - _result.resTable[suit][dealer] - 1;
+            int down = (level + 7) - _result.resTable[my_encoding][dealer] - 1;
             score = -UNDER_TRICKS_CHART[doubled][vul[dealer % 2]][down];
             // test[doubled][dealer][suit][level] = down;
         }
