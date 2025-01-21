@@ -13,7 +13,7 @@ def test_reward(env: Env):
     if len(_env.current_state.bidding_sequence) == 0:
         zero_cnt = -1
     else:
-        while _env.current_state.bidding_sequence[-i] == 0:
+        while i<=len(_env.current_state.bidding_sequence) and _env.current_state.bidding_sequence[-i] == 0:
             zero_cnt+=1
             i+=1
     for i in range(0, 3-zero_cnt):

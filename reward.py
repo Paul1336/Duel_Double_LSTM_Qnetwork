@@ -1,4 +1,5 @@
 import ctypes
+from ctypes import c_char_p, c_int, POINTER, Structure
 import platform
 from dataclasses import dataclass
 from state import State
@@ -35,6 +36,16 @@ class RewardCalculator:
         except Exception as e:
             raise RuntimeError(f"RewardCalculator.init() fail to load the .dll/.so: {e}") from e
         self.dll.ddAnalize.restype = ddResponse
+        self.dll.ddAnalize.argtypes = [
+            c_char_p,            # deal (PBN string)
+            POINTER(c_int),      # vul (array of 2 integers)
+            c_int,               # AP_hand
+            c_int,               # suit
+            c_int,               # level
+            c_int,               # doubled
+            c_int,               # dealer
+            c_int                # view
+        ]
 
     def imp_diff (self, state:State, sequence_end = True) -> float:
         if sequence_end == False:
@@ -89,3 +100,8 @@ class RewardCalculator:
 
             except Exception as e:
                 raise RuntimeError(f"An error occur in RewardCalculator.imp_diff(): {e}") from e
+    def __deepcopy__(self, memo):
+        # Exclude the DLL object from being copied
+        copied = RewardCalculator(self.pbn_str, self.vul)
+        copied.dll = self.dll  # Reuse the same DLL instance
+        return copied

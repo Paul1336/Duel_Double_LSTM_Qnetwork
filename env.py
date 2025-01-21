@@ -3,7 +3,7 @@ import torch
 from typing import Tuple
 from dealer import Dealer
 from state import State
-from reward_tmp import RewardCalculator
+from reward import RewardCalculator
 import random
 
 
@@ -35,7 +35,7 @@ class Env():
     def reset (self)-> State:
         new_game = Dealer.new_game()
         self.current_state = new_game.new_state
-        self.reward_calculater = (RewardCalculator(new_game.vul, new_game.pbn))
+        self.reward_calculater = (RewardCalculator(new_game.pbn, new_game.vul))
 
     @staticmethod
     def action_space(state: State)->list:

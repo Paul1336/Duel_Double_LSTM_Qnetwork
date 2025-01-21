@@ -62,3 +62,11 @@ The dataset and Experiment Log:
 the current structure of reward recalculate par score and dd answer every time we call the imp_diff() in reward.py, if once the scoring value for q change to revaluatio each step instead of the teminated state, the method imp_diff() should be optimized.
 
 g++ -std=c++11 -O3 -I./include DoubleDummySolver.cpp -L. -ldds -o DoubleDummySolver
+
+to compile .so file:
+g++ -shared -fPIC -o linux_dds.so DoubleDummySolver.cpp -L. -ldds
+ldd linux_dds.so
+export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:.
+sudo apt-get update
+sudo apt-get install libboost-thread-dev
+sudo ln -s /usr/lib/x86_64-linux-gnu/libboost_thread.so.1.83.0 /usr/lib/x86_64-linux-gnu/libboost_thread.so.1.74.0
