@@ -21,7 +21,7 @@ def test_reward(env: Env):
     for i in range(0, 3-zero_cnt):
         _, reward, _ = _env.step(0)
     if zero_cnt == 3:
-        if len(_env.current_state.bidding_sequence)%2 == 1:
+        if (len(_env.current_state.bidding_sequence)+_env.current_state.dealer)%2 == 1:
             reward, _ = _env.reward_calculater.imp_diff(_env.current_state)
         else: 
             _, reward = _env.reward_calculater.imp_diff(_env.current_state)

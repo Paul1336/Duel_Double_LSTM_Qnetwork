@@ -82,7 +82,7 @@ class Env():
             #print(len(self.current_state.bidding_sequence))
             if (len(self.current_state.bidding_sequence) == 4 and self.current_state.last_bid == 0) or (self.current_state.last_bid > 3 and (self.current_state.last_doubled > 3 or self.current_state.last_doubled == 0)):
                 _terminated = 1
-                if len(self.current_state.bidding_sequence)%2 == 1:
+                if (len(self.current_state.bidding_sequence)+self.current_state.dealer)%2 == 1:
                     _, _reward = self.reward_calculater.imp_diff(self.current_state) 
                 else:
                     _reward, _ = self.reward_calculater.imp_diff(self.current_state)
