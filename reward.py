@@ -12,7 +12,7 @@ SO_PATH = "./linux_dds.so"
 
 @dataclass
 class ddResponse(ctypes.Structure):
-    _fields_ = [("imp_loss", ctypes.c_int),
+    _fields_ = [("NS_imp_loss", ctypes.c_int),
                 ("error_type_calc", ctypes.c_int),
                 ("error_type_par", ctypes.c_int),]
 
@@ -44,10 +44,9 @@ class RewardCalculator:
             c_int,               # level
             c_int,               # doubled
             c_int,               # dealer
-            c_int                # view
         ]
 
-    def imp_diff (self, state:State, sequence_end = True) -> float:
+    def imp_diff (self, state:State, sequence_end = True) -> tuple[int, int]:
         if sequence_end == False:
             pass
         else:
@@ -59,11 +58,10 @@ class RewardCalculator:
                 level = 0 #0~6
                 doubled = 0
                 dealer = -1 #NESW
-                view = -1 #NS/EW
                 if len(state.bidding_sequence) <= 4 and state.last_bid==0:
                     AP_hand = True
                 else:
-                    view = (len(state.bidding_sequence) + state.dealer +1) % 2
+                    #view = (len(state.bidding_sequence) + state.dealer +1) % 2
 
                     suit = (state.bidding_sequence[-state.last_bid]-3) % 5
                     level = (state.bidding_sequence[-state.last_bid]-3) // 5
@@ -73,7 +71,7 @@ class RewardCalculator:
                         doubled = 0
                     for index, value in enumerate(state.bidding_sequence):
                         #print("index: ", index, "value: ", value)
-                        if (index + state.dealer)%2 == state.dealer%2:
+                        if index%2 == (len(state.bidding_sequence)-state.last_bid)%2:
                             #print("alpha, value: ", value, "suit: ", suit)
                             if (value-3)%5 == suit:
                                 #print("beta")
@@ -87,7 +85,7 @@ class RewardCalculator:
                 #print("pbn_str", self.pbn_str)
                 res = self.dll.ddAnalize(ctypes.c_char_p(self.pbn_str.encode('utf-8')), 
                                         (ctypes.c_int * 2)(*self.vul), ctypes.c_int(AP_hand), ctypes.c_int(suit), 
-                                        ctypes.c_int(level), ctypes.c_int(doubled),ctypes.c_int(dealer), ctypes.c_int(view))
+                                        ctypes.c_int(level), ctypes.c_int(doubled),ctypes.c_int(dealer))
                 #res = self.dll.ddAnalize(ctypes.c_char_p(self.pbn_str.encode('utf-8')), (ctypes.c_int * 2)(*self.vul), ctypes.c_int(suit), ctypes.c_int(level), ctypes.c_int(doubled), ctypes.c_int(dealer))
                 if res.error_type_calc != 1:
                     raise RuntimeError(f"CalcDDtablePBN() error type :{res.error_type_calc}")
@@ -97,9 +95,9 @@ class RewardCalculator:
                 log.debug(f"calculating imp loss, given state: ")
                 log.debug(f"pbn: {self.pbn_str}")
                 log.debug(f"vul: {self.vul}")
-                log.debug(f"suit = {suit}, level = {level}, doubled = {doubled}, dealer = {dealer}, view = {view}")
-                log.debug(f"imp loss = {res.imp_loss}")
-                return res.imp_loss
+                log.debug(f"suit = {suit}, level = {level}, doubled = {doubled}, dealer = {dealer}")
+                log.debug(f"imp loss = NS: {res.NS_imp_loss}, EW: {-res.NS_imp_loss}")
+                return res.NS_imp_loss, -res.NS_imp_loss
 
             except Exception as e:
                 raise RuntimeError(f"An error occur in RewardCalculator.imp_diff(): {e}") from e

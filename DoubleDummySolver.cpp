@@ -41,12 +41,12 @@ const int IMP_CHART[401] = {0, 0, 1, 1, 1, 2, 2, 2, 2, 3, 3, 3, 3, 4, 4, 4, 4, 5
 
 struct ddResponse
 {
-    int imp_loss;
+    int NS_imp_loss;
     int error_type_calc;
     int error_type_par;
 };
 
-extern "C" __attribute__((visibility("default"))) ddResponse ddAnalize(char *deal, int vul[2], int AP_hand, int suit, int level, int doubled, int dealer, int view)
+extern "C" __attribute__((visibility("default"))) ddResponse ddAnalize(char *deal, int vul[2], int AP_hand, int suit, int level, int doubled, int dealer)
 {
     SetMaxThreads(0);
     SetResources(0, 0);
@@ -55,7 +55,7 @@ extern "C" __attribute__((visibility("default"))) ddResponse ddAnalize(char *dea
     ddTableDealPBN _deal;
     strcpy(_deal.cards, deal);
     printf("In .cpp, get info: \npbn: %s\n", _deal.cards);
-    printf("vul: [NS: %d, EW: %d], AP_hand: %d, suit: %d, level: %d, doubled: %d, dealer: %d, view: %d\n", vul[0], vul[1], AP_hand, suit, level, doubled, dealer, view);
+    printf("vul: [NS: %d, EW: %d], AP_hand: %d, suit: %d, level: %d, doubled: %d, dealer: %d\n", vul[0], vul[1], AP_hand, suit, level, doubled, dealer);
     ddTableResults _result;
     res.error_type_calc = CalcDDtablePBN(_deal, &_result);
     if (res.error_type_calc != 1)
@@ -107,7 +107,6 @@ extern "C" __attribute__((visibility("default"))) ddResponse ddAnalize(char *dea
     }
     /*printf("NS : %s\n", _presp.parContractsString[0]);
     printf("EW : %s\n", _presp.parContractsString[1]);*/
-    int best_score;
     int sign = 1;
     int number = 0;
     int found_number = 0;
@@ -130,12 +129,9 @@ extern "C" __attribute__((visibility("default"))) ddResponse ddAnalize(char *dea
         }
         ptr++;
     }
-    best_score = number * sign;
-    if (view % 2 == 1)
-    {
-        best_score *= -1;
-    }
-    printf("best_score: %d\n", best_score);
+    int NS_best_score = number * sign;
+
+    printf("NS_best_score: %d\n", NS_best_score);
     printf("NS : %s\n", _presp.parContractsString[0]);
     printf("EW : %s\n", _presp.parContractsString[1]);
     /*for (int i = 0; i < 4; i++)
@@ -186,18 +182,25 @@ extern "C" __attribute__((visibility("default"))) ddResponse ddAnalize(char *dea
             //  test[doubled][dealer][suit][level] = down;
         }
     }
-    printf("current score = %d\n", score);
-    int diff = (score - best_score) / 10;
-    sign = 1;
-    if (diff < 0)
+    printf("current dealer score = %d\n", score);
+    int NS_diff, NS_sign;
+    if (dealer % 2 == 0)
     {
-        sign = -1;
-        diff = -diff;
+        NS_diff = (score - NS_best_score) / 10;
     }
-    if (diff > 400)
-        diff = 400;
-    res.imp_loss = sign * IMP_CHART[diff];
-
+    else
+    {
+        NS_diff = (-score - NS_best_score) / 10;
+    }
+    NS_sign = 1;
+    if (NS_diff < 0)
+    {
+        NS_sign = -1;
+        NS_diff = -diff;
+    }
+    if (NS_diff > 400)
+        NS_diff = 400;
+    res.NS_imp_loss = sign * IMP_CHART[diff];
     FreeMemory();
     return res;
 }
