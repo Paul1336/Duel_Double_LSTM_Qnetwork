@@ -196,11 +196,11 @@ extern "C" __attribute__((visibility("default"))) ddResponse ddAnalize(char *dea
     if (NS_diff < 0)
     {
         NS_sign = -1;
-        NS_diff = -diff;
+        NS_diff = -NS_diff;
     }
     if (NS_diff > 400)
         NS_diff = 400;
-    res.NS_imp_loss = sign * IMP_CHART[diff];
+    res.NS_imp_loss = NS_sign * IMP_CHART[NS_diff];
     FreeMemory();
     return res;
 }

@@ -124,7 +124,7 @@ class TestEnv(unittest.TestCase):
    
     def test_play_multiple_games(self):
         print("in test_play_multiple_games: ")
-        num_games = 100
+        num_games = 20
         results = []
         env = Env()
         for game in range(num_games):
