@@ -174,7 +174,7 @@ def save_model():
             existing_indices.append(index)
         except (IndexError, ValueError):
             continue
-    next_index = max(existing_indices) + 1
+    next_index = max(existing_indices, default=0) + 1
     try:
         new_file_path = os.path.join(base_dir, f"{today_date}_{next_index}_alpha.pth")
         agents[0].save_model(new_file_path)
