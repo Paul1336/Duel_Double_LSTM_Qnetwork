@@ -54,8 +54,8 @@ extern "C" __attribute__((visibility("default"))) ddResponse ddAnalize(char *dea
     ddResponse res;
     ddTableDealPBN _deal;
     strcpy(_deal.cards, deal);
-    printf("In .cpp, get info: \npbn: %s\n", _deal.cards);
-    printf("vul: [NS: %d, EW: %d], AP_hand: %d, suit: %d, level: %d, doubled: %d, dealer: %d\n", vul[0], vul[1], AP_hand, suit, level, doubled, dealer);
+    // printf("In .cpp, get info: \npbn: %s\n", _deal.cards);
+    // printf("vul: [NS: %d, EW: %d], AP_hand: %d, suit: %d, level: %d, doubled: %d, dealer: %d\n", vul[0], vul[1], AP_hand, suit, level, doubled, dealer);
     ddTableResults _result;
     res.error_type_calc = CalcDDtablePBN(_deal, &_result);
     if (res.error_type_calc != 1)
@@ -71,9 +71,9 @@ extern "C" __attribute__((visibility("default"))) ddResponse ddAnalize(char *dea
                 k = 3 - i;
             for (int j = 0; j < 4; j++)
             {
-                printf("%d ", _result.resTable[k][j]);
+                // printf("%d ", _result.resTable[k][j]);
             }
-            printf("\n");
+            // printf("\n");
         }
     }
     int encoded_vul;
@@ -106,7 +106,7 @@ extern "C" __attribute__((visibility("default"))) ddResponse ddAnalize(char *dea
         return res;
     }
     /*printf("NS : %s\n", _presp.parContractsString[0]);
-    printf("EW : %s\n", _presp.parContractsString[1]);*/
+    //printf("EW : %s\n", _presp.parContractsString[1]);*/
     int sign = 1;
     int number = 0;
     int found_number = 0;
@@ -131,9 +131,9 @@ extern "C" __attribute__((visibility("default"))) ddResponse ddAnalize(char *dea
     }
     int NS_best_score = number * sign;
 
-    printf("NS_best_score: %d\n", NS_best_score);
-    printf("NS : %s\n", _presp.parContractsString[0]);
-    printf("EW : %s\n", _presp.parContractsString[1]);
+    // printf("NS_best_score: %d\n", NS_best_score);
+    // printf("NS : %s\n", _presp.parContractsString[0]);
+    // printf("EW : %s\n", _presp.parContractsString[1]);
     /*for (int i = 0; i < 4; i++)
     {
         for (int j = 0; j < 5; j++)
@@ -156,7 +156,7 @@ extern "C" __attribute__((visibility("default"))) ddResponse ddAnalize(char *dea
 
     if (AP_hand == 1)
     {
-        printf("All passed\n");
+        // printf("All passed\n");
         score = 0;
     }
     else
@@ -167,13 +167,13 @@ extern "C" __attribute__((visibility("default"))) ddResponse ddAnalize(char *dea
         }
         if (level + 7 <= _result.resTable[my_encoding][dealer])
         {
-            printf("contract made\n");
+            // printf("contract made\n");
             int over_trick = _result.resTable[my_encoding][dealer] - (level + 7);
             score = CONTRACT_VAL[doubled][vul[dealer % 2]][suit][level] + OVERTRICK_VAL[doubled][vul[dealer % 2]][suit] * over_trick;
         }
         else
         {
-            printf("contract failed\n");
+            // printf("contract failed\n");
             int down = (level + 7) - _result.resTable[my_encoding][dealer] - 1;
             score = (-1) * (UNDER_TRICKS_CHART[doubled][vul[dealer % 2]][down]);
             // printf("down: %d, (UNDER_TRICKS_CHART[doubled][vul[dealer % 2]][down]): %d\n",down, UNDER_TRICKS_CHART[doubled][vul[dealer % 2]][down]);
@@ -182,7 +182,7 @@ extern "C" __attribute__((visibility("default"))) ddResponse ddAnalize(char *dea
             //  test[doubled][dealer][suit][level] = down;
         }
     }
-    printf("current dealer score = %d\n", score);
+    // printf("current dealer score = %d\n", score);
     int NS_diff, NS_sign;
     if (dealer % 2 == 0)
     {

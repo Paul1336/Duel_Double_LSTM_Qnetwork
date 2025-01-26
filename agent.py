@@ -18,11 +18,16 @@ class DuelDDQNAgent():
         self.log = logger.get_logger(__name__)
 
     def choose_action(self, state: State, epsilon: float) ->int:
+        #print("choosing action:\n")
         if np.random.uniform(0, 1) < epsilon:
+            #print("random action:\n")
             return Env.random_action(state)
         else:
             with torch.no_grad():
-                return self.pred_model(state, "main")
+                #print("selected action:\n")
+                #print(f"torch.argmax(self.pred_model(state, main)): {torch.argmax(self.pred_model(state, "main"))}")
+                #print(f"self.pred_model(state, main): {self.pred_model(state, "main")}")
+                return torch.argmax(self.pred_model(state, "main")).item()
             
     def synchronous_networks(self):
         self.Q_target = copy.deepcopy(self.Q_main)
@@ -35,15 +40,18 @@ class DuelDDQNAgent():
                 
     def train(self, exp:Experiance):
         #Update the agent.
+        #print(f"exp len: {len(exp)}")
         with torch.no_grad():
             next_q_values_target= self.pred_model(exp.next_state, "target")
             next_q_values_main = self.pred_model(exp.next_state, "main")
-        next_action = next_q_values_main.argmax(dim=1).item()
+        next_action = torch.argmax(next_q_values_main).item()
+        #next_q_values_main.argmax(dim=1).item()
         
-        q_values = self.pred_model(exp.state, "main")
+        q_values = torch.max(self.pred_model(exp.state, "main"))
         next_q_value = next_q_values_target[next_action]
         target_q_value = exp.reward + (1 - exp.terminated) * self.discount_factor * next_q_value
-        
+        #print(f"target_q_value: {target_q_value}")
+        #print(f"q_values: {q_values}")
         loss = target_q_value-q_values
         self.optimizer.zero_grad()
         loss.backward()

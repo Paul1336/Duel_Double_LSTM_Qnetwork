@@ -26,7 +26,7 @@ TARGET_UPDATE = 10
 MEMORY_SIZE = 10000
 MIN_MEMORY_SIZE = 64
 
-PRETRAINED_MODEL_PATH = './pretrained_LSTM.pt'
+PRETRAINED_MODEL_PATH = '../0125_bestmodel.pt'
 # TBA, save pretrained LSTM(full feature) with pytorch method: torch.save
 
 class EpsilonScheduler():
@@ -62,6 +62,15 @@ class ReplayMemory():
 
     def append(self, exp:Experiance):
         try:
+            #print("exp: ")
+            #print(f"episode: {exp.episode}")
+            #print(f"state: {exp.state}")
+            #print(f"action: {exp.action}")
+            #print(f"reward: {exp.reward}")
+            #print(f"next_state: {exp.next_state}")
+            #print(f"terminated: {exp.terminated}")
+            #print(f"====================================================")
+            
             self.buffer.append(exp)
         except:
             raise RuntimeError(f"ReplayMemory.append() occur an error: {e}") from e
@@ -94,11 +103,14 @@ def alternate_turns(epsilon = 0.5, training = False, episode = 0):
     _rewards = []
     _terminated = []
     state = env.reset()
-    turn = state.dealer
+    turn = (state.dealer) % 2
     terminated = False
     reward = 0
-    while terminated is not 1:
+    while terminated != 1:
+        #print(f"bidding sequence\n{state}\nbidding sequence\n")
+        #print(f"selecting action")
         action = agents[turn].choose_action(state, epsilon)
+        #print(f"env.step(action): {action}")
         next_state, reward, terminated = env.step(action)
         _states.append(state)
         _actions.append(action)
@@ -109,26 +121,30 @@ def alternate_turns(epsilon = 0.5, training = False, episode = 0):
         state = next_state
         if training is True:
            if len(memory) >= MIN_MEMORY_SIZE:
-                exp = memory.sample()
-                agent[turn].train(exp)
+               exp = memory.sample()
+               #print(f"type: {type(exp)}")
+               #memory.log()
+               agents[turn].train(exp[0])
     _rewards[-2] = -reward
     _terminated[-2] = 1
+    
     for i in range (len(_states)-2):
         memory.append(Experiance(episode, _states[i], _actions[i], _rewards[i], _states[i+2], _terminated[i]))
     memory.append(Experiance(episode, _states[-2], _actions[-2], _rewards[-2], state, 1))
     memory.append(Experiance(episode, _states[-1], _actions[-1], _rewards[-1], state, 1))
-    if turn == 0:
-        return - reward
+    if turn%2 == 1:
+        return _rewards[-1], _rewards[-2]
     else:
-        return reward
+        return _rewards[-2], _rewards[-1]
         
 
 def train_agents():
     epsilon_scheduler.update(episode)
-    total_reward = alternate_turns(epsilon = epsilon_scheduler.epsilon, training = True, episode = episode)
+    total_reward_alpha,  total_reward_beta= alternate_turns(epsilon = epsilon_scheduler.epsilon, training = True, episode = episode)
     if (episode+1) % TARGET_UPDATE == 0:
-        agent.synchronous_networks()
-    log.info(f"Episode: {episode}, Total Reward: {total_reward}")
+        agents[0].synchronous_networks()
+        agents[1].synchronous_networks()
+    log.info(f"Episode: {episode}, Total Reward, alphe: {total_reward_alpha}, beta: {total_reward_beta}")
     
 
 def build_memory(min_size, initial_epsilon):
@@ -189,7 +205,8 @@ if __name__ == "__main__":
     log.info(f"load pretrained model: {PRETRAINED_MODEL_PATH}")
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     log.info(f"Using device = {device}")
-    Q_model = Duel_DDNQ(pretrained_model).to(device)
+    Q_model = Duel_DDNQ(pretrained_model)
+    Q_model = Q_model.to(device)
     log.info(f"initialize q network")
     optimizer = optim.Adam(Q_model.parameters(), lr=LEARNING_RATE)
     log.info(f"initialize adam optimizer, learning rate = {LEARNING_RATE}")
@@ -212,6 +229,7 @@ if __name__ == "__main__":
         if running:
             # training loop
             log.info(f"episode = {episode}")
+            #train_agents()
             try:
                 if run_forever:
                     train_agents()
@@ -230,6 +248,7 @@ if __name__ == "__main__":
                 
         else:
             cmd = input("process paused, option: (r=resume, rN=resume N times, l=log current states, s=save model, q=quit): ").strip()
+            
             if cmd == 'r':
                 running = True
                 run_forever = True
