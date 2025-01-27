@@ -14,6 +14,7 @@ from datetime import datetime
 from agent import DuelDDQNAgent
 from model import Duel_DDNQ
 from env import Env, Experiance
+from state import State
 
 # parameters
 LEARNING_RATE = 0.001
@@ -97,15 +98,46 @@ class ReplayMemory():
                 log.debug(f"--- Experience {i} ---")
                 exp.log()
 
+def log_game(state:State, pbn:str, action:int = -1):
+    if action == -1:
+        pass
+    else:
+        vul_str = ""
+        action_str = ""
+        if state.features[62].item() == 1:
+            vul_str = "self"
+        elif state.features[63].item() == 1:
+            vul_str = "both"
+        elif state.features[64].item() == 1:
+            vul_str = "none"
+        else:
+            vul_str = "opp"
+        action_str += str(1+(action-3)//5)
+        if (action-3)%5 == 0:
+            action_str += "C"
+        elif (action-3)%5 == 1:
+            action_str += "D"
+        elif (action-3)%5 == 2:
+            action_str += "H"
+        elif (action-3)%5 == 3:
+            action_str += "S"
+        elif (action-3)%5 == 4:
+            action_str += "N"
+        hand = pbn.split("N:")[1].split()[(state.dealer+len(state.bidding_sequence)-1)%4]
+        log.debug(f"hands: {hand}\n")
+        log.debug(f"vul: {vul_str}\naction: {action_str}")
+        log.debug(f"bidding sequence: {state.bidding_sequence}\n")
+
 def alternate_turns(epsilon = 0.5, training = False, episode = 0):
     _states = []
     _actions = []
     _rewards = []
     _terminated = []
-    state = env.reset()
+    state, pbn = env.reset()
     turn = (state.dealer) % 2
     terminated = False
     reward = 0
+
     while terminated != 1:
         #print(f"bidding sequence\n{state}\nbidding sequence\n")
         #print(f"selecting action")
@@ -120,11 +152,12 @@ def alternate_turns(epsilon = 0.5, training = False, episode = 0):
         turn = (turn+1)%2
         state = next_state
         if training is True:
-           if len(memory) >= MIN_MEMORY_SIZE:
-               exp = memory.sample()
-               #print(f"type: {type(exp)}")
-               #memory.log()
-               agents[turn].train(exp[0])
+
+            if len(memory) >= MIN_MEMORY_SIZE:
+                exp = memory.sample()
+                #print(f"type: {type(exp)}")
+                #memory.log()
+                agents[turn].train(exp[0])
     _rewards[-2] = -reward
     _terminated[-2] = 1
     

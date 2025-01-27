@@ -92,11 +92,11 @@ class RewardCalculator:
                 if res.error_type_par != 1:
                     raise RuntimeError(f"Par() error type :{res.error_type_par}")
                 
-                log.debug(f"calculating imp loss, given state: ")
-                log.debug(f"pbn: {self.pbn_str}")
-                log.debug(f"vul: {self.vul}")
-                log.debug(f"suit = {suit}, level = {level}, doubled = {doubled}, dealer = {dealer}")
-                log.debug(f"imp loss = NS: {res.NS_imp_loss}, EW: {-res.NS_imp_loss}")
+                #log.debug(f"calculating imp loss, given state: ")
+                #log.debug(f"pbn: {self.pbn_str}")
+                #log.debug(f"vul: {self.vul}")
+                #log.debug(f"suit = {suit}, level = {level}, doubled = {doubled}, dealer = {dealer}")
+                #log.debug(f"imp loss = NS: {res.NS_imp_loss}, EW: {-res.NS_imp_loss}")
                 return res.NS_imp_loss, -res.NS_imp_loss
 
             except Exception as e:

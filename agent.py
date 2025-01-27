@@ -24,10 +24,10 @@ class DuelDDQNAgent():
             return Env.random_action(state)
         else:
             with torch.no_grad():
-                #print("selected action:\n")
-                #print(f"torch.argmax(self.pred_model(state, main)): {torch.argmax(self.pred_model(state, "main"))}")
-                #print(f"self.pred_model(state, main): {self.pred_model(state, "main")}")
-                return torch.argmax(self.pred_model(state, "main")).item()
+                legal_actions = Env.action_space(state)
+                filtered_values = self.pred_model(state, "main")[legal_actions]
+                return legal_actions[torch.argmax(filtered_values).item()]
+                #return torch.argmax(self.pred_model(state, "main")).item()
             
     def synchronous_networks(self):
         self.Q_target = copy.deepcopy(self.Q_main)

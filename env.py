@@ -32,11 +32,11 @@ class Env():
     def __init__ (self):
         self.reset()
 
-    def reset (self)-> State:
+    def reset (self):
         new_game = Dealer.new_game()
         self.current_state = new_game.new_state
         self.reward_calculater = (RewardCalculator(new_game.pbn, new_game.vul))
-        return self.current_state
+        return self.current_state, new_game.pbn
 
     @staticmethod
     def action_space(state: State)->list:
