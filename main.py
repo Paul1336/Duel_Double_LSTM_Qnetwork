@@ -229,6 +229,8 @@ def log_process_state():
     memory.log()
 
 def save_model():
+    log.debug(f"agent-alpha reward: \n{alpha_rewards}")
+    log.debug(f"agent-beta reward: \n{beta_rewards}")
     log.info(f"save currents models: ")
     base_dir = "./models"
     if not os.path.exists(base_dir):
