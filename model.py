@@ -55,7 +55,7 @@ class Duel_DDNQ(nn.Module):
         tensor_list  = []
         while cnt <= len(x.bidding_sequence):
             _row = single_bid.clone()
-            for i in range(3, 1, -1):
+            for i in range(3, 0, -1):
                 if cnt - i < 0:
                     _row[66+(3-i)*39] = 1
                 else:
@@ -63,7 +63,7 @@ class Duel_DDNQ(nn.Module):
                     _row[67+(3-i)*39+x.bidding_sequence[cnt-i]] = 1
             cnt+=4
             tensor_list.append(_row)
-        self.log.debug(f"tensor_list: {tensor_list}")
+        #self.log.debug(f"tensor_list: {tensor_list}")
         tensor_list = torch.stack(tensor_list).unsqueeze(0).cuda()
         shared_out, _ = self.lstm(tensor_list.cuda())
         shared_out = shared_out[:, -1, :]

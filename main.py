@@ -10,6 +10,7 @@ import signal
 import os
 import copy
 from datetime import datetime
+import matplotlib.pyplot as plt
 # my customize lib
 from agent import DuelDDQNAgent
 from model import Duel_DDNQ
@@ -26,6 +27,8 @@ CREATE_MEMORY_EPSILON = 0.5
 TARGET_UPDATE = 100
 MEMORY_SIZE = 10000
 MIN_MEMORY_SIZE = 100
+alpha_rewards = []
+beta_rewards = []
 
 PRETRAINED_MODEL_PATH = '../0125_bestmodel.pt'
 # TBA, save pretrained LSTM(full feature) with pytorch method: torch.save
@@ -149,7 +152,9 @@ def alternate_turns(epsilon = 0.5, training = False, episode = 0):
     while terminated != 1:
         #print(f"bidding sequence\n{state}\nbidding sequence\n")
         #print(f"selecting action")
+        log.debug("choosing action(for memory gen)")
         action = agents[turn].choose_action(state, epsilon)
+        log.debug("action selected")
         #print(f"env.step(action): {action}")
         next_state, reward, terminated = env.step(action)
         _states.append(state)
@@ -179,14 +184,39 @@ def alternate_turns(epsilon = 0.5, training = False, episode = 0):
         return _rewards[-2], _rewards[-1]
         
 
+
 def train_agents():
     epsilon_scheduler.update(episode)
     total_reward_alpha,  total_reward_beta= alternate_turns(epsilon = epsilon_scheduler.epsilon, training = True, episode = episode)
     if (episode+1) % TARGET_UPDATE == 0:
         agents[0].synchronous_networks()
         agents[1].synchronous_networks()
+    alpha_rewards.append(total_reward_alpha)
+    beta_rewards.append(total_reward_beta)
     log.info(f"Episode: {episode}, Total Reward, alphe: {total_reward_alpha}, beta: {total_reward_beta}")
+    if (episode + 1) %50 == 0:
+        plot_rewards()
+def plot_rewards():
+    output_dir = './pic'
+    os.makedirs(output_dir, exist_ok=True)
     
+    today_date = datetime.now().strftime("%Y%m%d")
+    file_name = f"{today_date}_rewards_plot_episode_{episode + 1}.png"
+    file_path = os.path.join(output_dir, file_name)
+    
+    plt.figure(figsize=(10, 6))
+    plt.plot(alpha_rewards, label='Alpha Reward', marker='o')
+    plt.plot(beta_rewards, label='Beta Reward', marker='x')
+    plt.xlabel('Episode')
+    plt.ylabel('Total Reward')
+    plt.title('Total Rewards per Episode')
+    plt.legend()
+    plt.grid(True)
+    
+    plt.savefig(file_path)
+    plt.close()
+    
+    log.info(f"Reward plot saved at: {file_path}")
 
 def build_memory(min_size, initial_epsilon):
     while len(memory) < min_size:

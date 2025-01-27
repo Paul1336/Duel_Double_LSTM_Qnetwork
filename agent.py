@@ -20,9 +20,10 @@ class DuelDDQNAgent():
     def choose_action(self, state: State, epsilon: float) ->int:
         #print("choosing action:\n")
         if np.random.uniform(0, 1) < epsilon:
-            #print("random action:\n")
+            self.log.debug("random action\n")
             return Env.random_action(state)
         else:
+            self.log.debug("predicted action\n")
             with torch.no_grad():
                 legal_actions = Env.action_space(state)
                 filtered_values = self.pred_model(state, "main")[legal_actions]
