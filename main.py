@@ -148,7 +148,7 @@ def alternate_turns(epsilon = 0.5, training = False, episode = 0):
         _actions.append(action)
         _rewards.append(reward)
         _terminated.append(terminated)
-
+        log_game(next_state, pbn, _actions)
         turn = (turn+1)%2
         state = next_state
         if training is True:

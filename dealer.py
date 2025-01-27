@@ -101,7 +101,7 @@ class Dealer():
         _state.last_pass = 0
         _deal.new_state = _state
         #log.debug("Creacted a deal:")
-        _deal.new_state.log()
+        #_deal.new_state.log()
         #log.debug(f"vul: {_deal.vul}")
         #log.debug(f"pbn: {_deal.pbn}")
         return _deal
