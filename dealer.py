@@ -90,12 +90,14 @@ class Dealer():
                 _vulnerable[1][2] = 1
                 _vulnerable[2][2] = 1
                 _vulnerable[3][2] = 1
+        
+        _state.features = _features
+        _state.dealer = random.randint(0, 3)
+
         if USE_CARD_DETAIL is True:
             _features = [torch.cat((cards, features)) for cards, features in zip(_cards, _extract_features)]
         _features = [torch.cat((features, vulnerable)) for features, vulnerable in zip(_features, _vulnerable)]
-        _state.features = _features
-        _state.dealer = random.randint(0, 3)
-        _state.agent_team = random.randint(0, 1)
+
         _state.last_bid = 0
         _state.last_doubled = 0
         _state.last_pass = 0

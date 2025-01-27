@@ -19,13 +19,13 @@ from state import State
 # parameters
 LEARNING_RATE = 0.001
 DISCOUNT_FACTOR = 0.99
-EPS_START = 0.9
+EPS_START = 0.5
 EPS_END = 0.05
 EPS_DECAY = 1000
 CREATE_MEMORY_EPSILON = 0.5
-TARGET_UPDATE = 10
+TARGET_UPDATE = 100
 MEMORY_SIZE = 10000
-MIN_MEMORY_SIZE = 64
+MIN_MEMORY_SIZE = 100
 
 PRETRAINED_MODEL_PATH = '../0125_bestmodel.pt'
 # TBA, save pretrained LSTM(full feature) with pytorch method: torch.save
@@ -100,32 +100,40 @@ class ReplayMemory():
 
 def log_game(state:State, pbn:str, action:int = -1):
     if action == -1:
-        pass
+        log.debug(f"initial info: {state}")
     else:
         vul_str = ""
         action_str = ""
-        if state.features[62].item() == 1:
+        if state.features[(state.dealer+len(state.bidding_sequence)-1)%4][62].item() == 1:
             vul_str = "self"
-        elif state.features[63].item() == 1:
+        elif state.features[(state.dealer+len(state.bidding_sequence)-1)%4][63].item() == 1:
             vul_str = "both"
-        elif state.features[64].item() == 1:
+        elif state.features[(state.dealer+len(state.bidding_sequence)-1)%4][64].item() == 1:
             vul_str = "none"
         else:
             vul_str = "opp"
-        action_str += str(1+(action-3)//5)
-        if (action-3)%5 == 0:
-            action_str += "C"
-        elif (action-3)%5 == 1:
+        if action == 0:
+            action_str += "P"
+        elif action == 1:
             action_str += "D"
-        elif (action-3)%5 == 2:
-            action_str += "H"
-        elif (action-3)%5 == 3:
-            action_str += "S"
-        elif (action-3)%5 == 4:
-            action_str += "N"
+        elif action == 2:
+            action_str += "R"
+        else:
+            action_str += str(1+(action-3)//5)
+            if (action-3)%5 == 0:
+                action_str += "C"
+            elif (action-3)%5 == 1:
+                action_str += "D"
+            elif (action-3)%5 == 2:
+                action_str += "H"
+            elif (action-3)%5 == 3:
+                action_str += "S"
+            elif (action-3)%5 == 4:
+                action_str += "N"
         hand = pbn.split("N:")[1].split()[(state.dealer+len(state.bidding_sequence)-1)%4]
-        log.debug(f"hands: {hand}\n")
-        log.debug(f"vul: {vul_str}\naction: {action_str}")
+        log.debug(f"hands: {hand}")
+        log.debug(f"vul: {vul_str}")
+        log.debug(f"action: {action_str}")
         log.debug(f"bidding sequence: {state.bidding_sequence}\n")
 
 def alternate_turns(epsilon = 0.5, training = False, episode = 0):
@@ -137,7 +145,7 @@ def alternate_turns(epsilon = 0.5, training = False, episode = 0):
     turn = (state.dealer) % 2
     terminated = False
     reward = 0
-
+    log_game(state, pbn, -1)
     while terminated != 1:
         #print(f"bidding sequence\n{state}\nbidding sequence\n")
         #print(f"selecting action")
@@ -148,7 +156,7 @@ def alternate_turns(epsilon = 0.5, training = False, episode = 0):
         _actions.append(action)
         _rewards.append(reward)
         _terminated.append(terminated)
-        log_game(next_state, pbn, _actions)
+        log_game(next_state, pbn, action)
         turn = (turn+1)%2
         state = next_state
         if training is True:

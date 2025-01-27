@@ -2,6 +2,7 @@ import torch
 import torch.nn as nn
 from env import Env
 from state import State
+import logger
 
 class Duel_DDNQ(nn.Module):
     """def __init__(self, pretrained_model, LSTM_output_dim = 38, head_hidden_dim = 128):
@@ -18,6 +19,7 @@ class Duel_DDNQ(nn.Module):
     """
     def __init__(self, pretrained_model_state_dict, LSTM_output_dim=38, head_hidden_dim=128):
         super(Duel_DDNQ, self).__init__()
+        self.log = logger.get_logger(__name__)
         self.lstm = nn.LSTM(
             input_size=183,
             hidden_size=1024,
@@ -61,6 +63,7 @@ class Duel_DDNQ(nn.Module):
                     _row[67+(3-i)*39+x.bidding_sequence[cnt-i]] = 1
             cnt+=4
             tensor_list.append(_row)
+        self.log.debug(f"tensor_list: {tensor_list}")
         tensor_list = torch.stack(tensor_list).unsqueeze(0).cuda()
         shared_out, _ = self.lstm(tensor_list.cuda())
         shared_out = shared_out[:, -1, :]
