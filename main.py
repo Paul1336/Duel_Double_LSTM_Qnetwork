@@ -18,15 +18,15 @@ from env import Env, Experiance
 from state import State
 
 # parameters
-LEARNING_RATE = 0.001
+LEARNING_RATE = 0.0005
 DISCOUNT_FACTOR = 0.99
-EPS_START = 0.5
-EPS_END = 0.05
-EPS_DECAY = 1000
+EPS_START = 0.9
+EPS_END = 0.01
+EPS_DECAY = 80000
 CREATE_MEMORY_EPSILON = 0.5
-TARGET_UPDATE = 100
-MEMORY_SIZE = 10000
-MIN_MEMORY_SIZE = 100
+TARGET_UPDATE = 5000
+MEMORY_SIZE = 3000
+MIN_MEMORY_SIZE = 1000
 alpha_rewards = []
 beta_rewards = []
 
@@ -205,8 +205,8 @@ def plot_rewards():
     file_path = os.path.join(output_dir, file_name)
     
     plt.figure(figsize=(10, 6))
-    plt.plot(alpha_rewards, label='Alpha Reward', marker='o')
-    plt.plot(beta_rewards, label='Beta Reward', marker='x')
+    plt.plot(alpha_rewards[-50:], label='Alpha Reward', marker='o')
+    plt.plot(beta_rewards[-50:], label='Beta Reward', marker='x')
     plt.xlabel('Episode')
     plt.ylabel('Total Reward')
     plt.title('Total Rewards per Episode')

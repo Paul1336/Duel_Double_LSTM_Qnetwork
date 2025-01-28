@@ -70,3 +70,6 @@ export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:.
 sudo apt-get update
 sudo apt-get install libboost-thread-dev
 sudo ln -s /usr/lib/x86_64-linux-gnu/libboost_thread.so.1.83.0 /usr/lib/x86_64-linux-gnu/libboost_thread.so.1.74.0
+
+to evaluate:
+python eval.py --path <path_to_pretrained_model.pt>

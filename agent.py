@@ -4,6 +4,8 @@ import copy
 from env import Env, State, Experiance
 import logger
 
+TEMPERATURE = 1
+
 class DuelDDQNAgent():
     Q_main = None
     Q_target = None
@@ -20,8 +22,12 @@ class DuelDDQNAgent():
     def choose_action(self, state: State, epsilon: float) ->int:
         #print("choosing action:\n")
         if np.random.uniform(0, 1) < epsilon:
-            self.log.debug("random action\n")
-            return Env.random_action(state)
+            legal_actions = Env.action_space(state)
+            filtered_values = self.pred_model(state, "main")[legal_actions]
+            probabilities = torch.softmax(filtered_values / TEMPERATURE, dim=0)
+            chosen_index = torch.multinomial(probabilities, num_samples=1)
+            return legal_actions[chosen_index.item()]
+            #return Env.random_action(state)
         else:
             self.log.debug("predicted action\n")
             with torch.no_grad():
