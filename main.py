@@ -9,6 +9,7 @@ import logger
 import signal
 import os
 import copy
+import numpy as np
 from datetime import datetime
 import matplotlib.pyplot as plt
 # my customize lib
@@ -18,17 +19,18 @@ from env import Env, Experiance
 from state import State
 
 # parameters
-LEARNING_RATE = 0.0005
+LEARNING_RATE = 0.000005
 DISCOUNT_FACTOR = 0.99
 EPS_START = 0.9
-EPS_END = 0.01
-EPS_DECAY = 80000
-CREATE_MEMORY_EPSILON = 0.5
-TARGET_UPDATE = 5000
-MEMORY_SIZE = 3000
-MIN_MEMORY_SIZE = 1000
+EPS_END = 0.1
+EPS_DECAY = 50000
+CREATE_MEMORY_EPSILON = 0.1
+TARGET_UPDATE = 10000
+MEMORY_SIZE = 10000
+MIN_MEMORY_SIZE = 10000
 alpha_rewards = []
 beta_rewards = []
+TEMPERATURE = 5
 
 PRETRAINED_MODEL_PATH = '../0125_bestmodel.pt'
 # TBA, save pretrained LSTM(full feature) with pytorch method: torch.save
@@ -47,8 +49,8 @@ class EpsilonScheduler():
 
     def update(self, episode:int):
         try:
-            self.epsilon = self.end + (self.start - self.end) * math.exp(-1. * episode / self.decay_rate)
-        except:
+            self.epsilon = self.end + (self.start - self.end) * (0.5 ** (episode/self.decay_rate))
+        except Exception as e:
             raise RuntimeError(f"EpsilonScheduler.update() occur an error: {e}") from e
 
     def log(self):
@@ -139,7 +141,7 @@ def log_game(state:State, pbn:str, action:int = -1):
         log.debug(f"action: {action_str}")
         log.debug(f"bidding sequence: {state.bidding_sequence}\n")
 
-def alternate_turns(epsilon = 0.5, training = False, episode = 0):
+def alternate_turns(epsilon = 0.5, training = False, episode = 0, train_agent = False):
     _states = []
     _actions = []
     _rewards = []
@@ -153,7 +155,16 @@ def alternate_turns(epsilon = 0.5, training = False, episode = 0):
         #print(f"bidding sequence\n{state}\nbidding sequence\n")
         #print(f"selecting action")
         log.debug("choosing action(for memory gen)")
-        action = agents[turn].choose_action(state, epsilon)
+        pretrained = False
+        if np.random.uniform(0, 1) < max(epsilon/5, 0.1):
+            pretrained = True
+        if training is False:
+            action = agents[turn].choose_action(state, epsilon)
+        else:
+            if pretrained is True:
+                action = agents[turn].choose_action_origin(state, epsilon)
+            else:
+                action = agents[turn].choose_action(state, epsilon)
         log.debug("action selected")
         #print(f"env.step(action): {action}")
         next_state, reward, terminated = env.step(action)
@@ -164,7 +175,7 @@ def alternate_turns(epsilon = 0.5, training = False, episode = 0):
         log_game(next_state, pbn, action)
         turn = (turn+1)%2
         state = next_state
-        if training is True:
+        if training is True and (turn == 0 or train_agent == True):
 
             if len(memory) >= MIN_MEMORY_SIZE:
                 exp = memory.sample()
@@ -187,14 +198,14 @@ def alternate_turns(epsilon = 0.5, training = False, episode = 0):
 
 def train_agents():
     epsilon_scheduler.update(episode)
-    total_reward_alpha,  total_reward_beta= alternate_turns(epsilon = epsilon_scheduler.epsilon, training = True, episode = episode)
+    total_reward_alpha,  total_reward_beta= alternate_turns(epsilon = epsilon_scheduler.epsilon, training = True, episode = episode, train_agent=False if episode < 200000 else True)
     if (episode+1) % TARGET_UPDATE == 0:
         agents[0].synchronous_networks()
         agents[1].synchronous_networks()
     alpha_rewards.append(total_reward_alpha)
     beta_rewards.append(total_reward_beta)
     log.info(f"Episode: {episode}, Total Reward, alphe: {total_reward_alpha}, beta: {total_reward_beta}")
-    if (episode + 1) %50 == 0:
+    if (episode + 1) %1000== 0:
         plot_rewards()
 def plot_rewards():
     output_dir = './pic'
@@ -273,6 +284,11 @@ if __name__ == "__main__":
     log.info(f"running on process ID = {pid}")
     print(f"use command: \"kill -SIGUSR1 {pid}\" to go to the menu")
     log.info("initialize...")
+    random_seed = int(datetime.now().timestamp())
+    log.info(f"Using timestamp-based seed: {random_seed}")
+    random.seed(random_seed)
+    np.random.seed(random_seed)
+    torch.manual_seed(random_seed)
     pretrained_model = torch.load(PRETRAINED_MODEL_PATH)
     #TBA
     log.info(f"load pretrained model: {PRETRAINED_MODEL_PATH}")
@@ -283,9 +299,9 @@ if __name__ == "__main__":
     log.info(f"initialize q network")
     optimizer = optim.Adam(Q_model.parameters(), lr=LEARNING_RATE)
     log.info(f"initialize adam optimizer, learning rate = {LEARNING_RATE}")
-    agent = DuelDDQNAgent(Q_model, optimizer, DISCOUNT_FACTOR)
+    agent = DuelDDQNAgent(Q_model, optimizer, DISCOUNT_FACTOR, TEMPERATURE)
     agents = [copy.deepcopy(agent), copy.deepcopy(agent)]
-    log.info(f"build agent list, discount factor = {DISCOUNT_FACTOR}, target q update per {TARGET_UPDATE} epochs")
+    log.info(f"build agent list, discount factor = {DISCOUNT_FACTOR}, target q update per {TARGET_UPDATE} epochs, temperature = {TEMPERATURE}")
     env = Env()
     log.info(f"build enviroment")
     epsilon_scheduler = EpsilonScheduler(initial_val=EPS_START, min_val=EPS_END, decay_rate=EPS_DECAY)
