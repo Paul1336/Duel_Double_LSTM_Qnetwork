@@ -17,16 +17,16 @@ class Duel_DDNQ(nn.Module):
         self.val_fc = nn.Linear(LSTM_output_dim, head_hidden_dim).cuda()
         self.val_out = nn.Linear(head_hidden_dim, 1).cuda()
     """
-    def __init__(self, pretrained_model_state_dict, LSTM_output_dim=38, head_hidden_dim=128):
+    def __init__(self, pretrained_model_state_dict, lstm_hidden=1024, lstm_layers=4, LSTM_output_dim=38, head_hidden_dim=256):
         super(Duel_DDNQ, self).__init__()
         self.log = logger.get_logger(__name__)
         self.lstm = nn.LSTM(
             input_size=183,
-            hidden_size=1024,
-            num_layers=4,
+            hidden_size=lstm_hidden,
+            num_layers=lstm_layers,
             batch_first=True
         )
-
+        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         lstm_state_dict = {
             key.replace("lstm1.", ""): value
             for key, value in pretrained_model_state_dict.items()
@@ -34,17 +34,37 @@ class Duel_DDNQ(nn.Module):
         }
 
         self.lstm.load_state_dict(lstm_state_dict)
-        self.lstm = self.lstm.cuda()
 
-        self.fc = nn.Linear(1024, LSTM_output_dim)
-        self.fc.weight.data = pretrained_model_state_dict["fc.weight"].clone()
-        self.fc.bias.data = pretrained_model_state_dict["fc.bias"].clone()
-        self.fc = self.fc.cuda()
+        self.fc = nn.Sequential(
+            nn.Linear(lstm_hidden, LSTM_output_dim),
+            nn.LayerNorm(LSTM_output_dim),
+            nn.ReLU(),
+            nn.Dropout(0.1)
+        )
+        self.fc[0].weight.data = pretrained_model_state_dict["fc.weight"].clone()
+        self.fc[0].bias.data = pretrained_model_state_dict["fc.bias"].clone()
+
+        self.adv = nn.Sequential(
+            nn.Linear(LSTM_output_dim, head_hidden_dim),
+            nn.ReLU(),
+            nn.Linear(head_hidden_dim, Env.n_actions)
+        )
+
+        self.val = nn.Sequential(
+            nn.Linear(LSTM_output_dim, head_hidden_dim),
+            nn.ReLU(),
+            nn.Linear(head_hidden_dim, 1)
+        )
+        self.to(self.device)
+        #self.fc = nn.Linear(1024, LSTM_output_dim)
+        #self.fc.weight.data = pretrained_model_state_dict["fc.weight"].clone()
+        #self.fc.bias.data = pretrained_model_state_dict["fc.bias"].clone()
+        #self.fc = self.fc.cuda()
         
-        self.adv_fc = nn.Linear(LSTM_output_dim, head_hidden_dim).cuda()
-        self.adv_out = nn.Linear(head_hidden_dim, Env.n_actions).cuda()
-        self.val_fc = nn.Linear(LSTM_output_dim, head_hidden_dim).cuda()
-        self.val_out = nn.Linear(head_hidden_dim, 1).cuda()
+        #self.adv_fc = nn.Linear(LSTM_output_dim, head_hidden_dim).cuda()
+        #self.adv_out = nn.Linear(head_hidden_dim, Env.n_actions).cuda()
+        #self.val_fc = nn.Linear(LSTM_output_dim, head_hidden_dim).cuda()
+        #self.val_out = nn.Linear(head_hidden_dim, 1).cuda()
 
 
     def forward(self, x:State) ->float:
@@ -68,14 +88,16 @@ class Duel_DDNQ(nn.Module):
         shared_out, _ = self.lstm(tensor_list.cuda())
         shared_out = shared_out[:, -1, :]
         shared_out =self.fc(shared_out)
-        adv = nn.ReLU()(self.adv_fc(shared_out))
-        adv = self.adv_out(adv)
+        
+        #adv = nn.ReLU()(self.adv_fc(shared_out))
+        _adv = self.adv(shared_out)
         #print(f"adv: {adv}")
-        val = nn.ReLU()(self.val_fc(shared_out))
-        val = self.val_out(val)
+        #val = nn.ReLU()(self.val_fc(shared_out))
+        _val = self.val(shared_out)
         #print(f"val: {val}")
         #print(f"mean: {torch.mean(adv)}")
-        q_values = (val-torch.mean(adv)) + adv
+        #q_values = (val-torch.mean(adv)) + adv
+        q_values = _val + _adv - _adv.mean(dim=1, keepdim=True)
         #tba, adjustment for Q-value calc
         return q_values.flatten()
     
