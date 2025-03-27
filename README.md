@@ -5,31 +5,7 @@ You can find the pretrained model source code at the following link:[https://git
 The dataset and Experiment Log:
 [https://drive.google.com/drive/folders/1o8Xu1InRWeP3vMJ3RrRQa7mrjhiGmpHE?usp=drive_link](https://drive.google.com/drive/folders/1o8Xu1InRWeP3vMJ3RrRQa7mrjhiGmpHE?usp=drive_link)
 
-# Project Overview
-
-## (To be tuning)
-
-- **`main.py`**:
-
-  - `EpsilonScheduler.update()` decay algo base on episode or other factor V
-  - `parameters` save pretrained LSTM with pytorch method: torch.save, try full data set w/ cards info
-
-- **`model.py`**:
-  - `__init__()` adjustment for the model's heads
-  - `forward()` adjustment for Q-value calc
-
-## (To do list)
-
-- **`main.py`**:
-
-  - `main()` loggin and saving model
-  - `main()` contral during process
-
-- **`model.py`**:
-  - testing for sequence input and pretrained model
-  - training LSTM
-
-## Data Structure and Encoding
+# Data Structure and Encoding
 
 - **`State`**:
 
@@ -61,7 +37,7 @@ The dataset and Experiment Log:
 
 the current structure of reward recalculate par score and dd answer every time we call the imp_diff() in reward.py, if once the scoring value for q change to revaluatio each step instead of the teminated state, the method imp_diff() should be optimized.
 
-g++ -std=c++11 -O3 -I./include DoubleDummySolver.cpp -L. -ldds -o DoubleDummySolver
+output log stored here: https://drive.google.com/drive/folders/1_z0wdUCKif2fJrmsY-YzTDdZWEjdyBg3?usp=sharing
 
 to compile .so file:
 g++ -shared -fPIC -o linux_dds.so DoubleDummySolver.cpp -L. -ldds
